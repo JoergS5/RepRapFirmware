@@ -1,1 +1,94 @@
-//test
+/*
+ * FiveAxisRobotKinematics.h
+ *
+ *  Created on: 09 Aug 2020
+ *      Author: JoergS5
+ *
+ *	documentation: https://duet3d.dozuki.com/Wiki/Configuring_RepRapFirmware_for_a_FiveAxisRobot?revisionid=HEAD
+ */
+
+#ifndef SRC_MOVEMENT_KINEMATICS_FIVEAXISROBOTKINEMATICS_H_
+#define SRC_MOVEMENT_KINEMATICS_FIVEAXISROBOTKINEMATICS_H_
+
+#include "RepRapFirmware.h"
+#include "Kinematics.h"
+
+class FiveAxisRobotKinematics : public Kinematics
+{
+public:
+	// Constructors
+	FiveAxisRobotKinematics() noexcept;
+
+	// Overridden base class functions. See Kinematics.h for descriptions.
+	const char *GetName(bool forStatusReport) const noexcept override;
+	bool Configure(unsigned int mCode, GCodeBuffer& gb, const StringRef& reply, bool& error) THROWS(GCodeException) override;
+
+	bool CartesianToMotorSteps(const float machinePos[], const float stepsPerMm[], size_t numVisibleAxes, size_t numTotalAxes, int32_t motorPos[], bool isCoordinated) const noexcept override;
+	void MotorStepsToCartesian(const int32_t motorPos[], const float stepsPerMm[], size_t numVisibleAxes, size_t numTotalAxes, float machinePos[]) const noexcept override;
+	bool SupportsAutoCalibration() const noexcept override { return true; }
+	bool DoAutoCalibration(size_t numFactors, const RandomProbePointSet& probePoints, const StringRef& reply) noexcept override;
+	void SetCalibrationDefaults() noexcept override;
+
+#if HAS_MASS_STORAGE
+	bool WriteCalibrationParameters(FileStore *f) const noexcept override;
+#endif
+
+	float GetTiltCorrection(size_t axis) const noexcept override;
+	bool IsReachable(float x, float y, bool isCoordinated) const noexcept override;
+	LimitPositionResult LimitPosition(float finalCoords[], const float * null initialCoords, size_t numVisibleAxes, AxesBitmap axesHomed, bool isCoordinated, bool applyM208Limits) const noexcept override;
+	void GetAssumedInitialPosition(size_t numAxes, float positions[]) const noexcept override;
+	AxesBitmap AxesToHomeBeforeProbing() const noexcept override;
+	MotionType GetMotionType(size_t axis) const noexcept override;
+	size_t NumHomingButtons(size_t numVisibleAxes) const noexcept override { return 0; }
+	HomingMode GetHomingMode() const noexcept override { return HomingMode::homeIndividualMotors; }
+	AxesBitmap AxesAssumedHomed(AxesBitmap g92Axes) const noexcept override;
+	AxesBitmap MustBeHomedAxes(AxesBitmap axesMoving, bool disallowMovesBeforeHoming) const noexcept override;
+	AxesBitmap GetHomingFileName(AxesBitmap toBeHomed, AxesBitmap alreadyHomed, size_t numVisibleAxes, const StringRef& filename) const noexcept override;
+	bool QueryTerminateHomingMove(size_t axis) const noexcept override;
+	void OnHomingSwitchTriggered(size_t axis, bool highEnd, const float stepsPerMm[], DDA& dda) const noexcept override;
+
+#if HAS_MASS_STORAGE
+	bool WriteResumeSettings(FileStore *f) const noexcept override;
+#endif
+
+	void LimitSpeedAndAcceleration(DDA& dda, const float *normalisedDirectionVector, size_t numVisibleAxes, bool continuousRotationShortcut) const noexcept override;
+	AxesBitmap GetLinearAxes() const noexcept override;
+
+protected:
+	DECLARE_OBJECT_MODEL
+	OBJECT_MODEL_ARRAY(towers)
+
+private:
+	static constexpr const char *Home5AxisRobotFileName = "home5axisrobot.g";
+	static constexpr float DefaultSegmentsPerSecond = 100.0;
+	static constexpr float DefaultMinSegmentSize = 0.2;
+
+	void Recalc() noexcept;
+	void optimizeCode(int32_t valInt);
+
+	// Primary parameters
+	float axis1coords[2];		// XY
+	float axis2coords[3];		// XYZ
+	float axis6coords[1];		// Y rail 6th axis
+	bool useRail;				// if rail is used
+	int32_t currentPstrategy;	// current P setting
+	int32_t previousPstrategy;	// if P6, store value where it shall return
+	float arm2length;		// starting at axis2
+	float arm3length;		// starting at axis3
+	float arm4length;		// starting at axis4
+	float arm5length;		// starting at axis5
+
+	float angle1limits[2];	// limit angle1 of vertical axis1 min and max (including values both)
+	float angle2limits[2];	// limit angle2 of axis2 min and max (including values both)
+	float angle3limits[2];	// limit angle3 of axis3 min and max (including values both)
+	float angle4limits[2];	// limit angle4 of axis4 min and max (including values both)
+	float angle5limits[2];	// limit angle5 of vertical axis5 min and max (including values both)
+
+	float arm2bendingFactor;	// B parameter a2 value
+	float arm3bendingFactor;	// B parameter a3 value
+	float arm5bendingFactor;	// B parameter a5 value
+
+};
+
+#endif /* SRC_MOVEMENT_KINEMATICS_FIVEAXISROBOTKINEMATICS_H_ */
+
