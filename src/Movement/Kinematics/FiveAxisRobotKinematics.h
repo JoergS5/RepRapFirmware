@@ -65,11 +65,20 @@ private:
 
 	void Recalc() noexcept;
 	void optimizeCode(int32_t valInt);
+	void getIntersec(float result12[], float firstRadius, float secondRadius, float firstX, float firstY, float secondX, float secondY) const noexcept;
+	void getIntersectionUpper(float _axis1x, float _axis1y, float _axis2y, float xmid, float ymid, float radiusMid, float tangent[]) const;
+	float getAngle1(float x, float y, float z) const;
+	void getAxis2Coords(float angle1, float axis2coords[]) const;
+	void getAxis3Coords(float angle1, const float axis2coords[], const float axis4coords[], float axis3coords[],
+			float angles234[]) const;
+	void getAxis4Coords(const float axis5coords[], float axis4coords[]) const;
+	void getAxis5Coords(float x, float y, float z, float angle1, float axis5coords[]) const;
 
 	// Primary parameters
 	float axis1coords[2];		// XY
 	float axis2coords[3];		// XYZ
 	float axis6coords[1];		// Y rail 6th axis
+	bool axis2yis0 = false;		// if true, arm 2 goes through axis 1
 	bool useRail;				// if rail is used
 	int32_t currentPstrategy;	// current P setting
 	int32_t previousPstrategy;	// if P6, store value where it shall return
@@ -91,4 +100,3 @@ private:
 };
 
 #endif /* SRC_MOVEMENT_KINEMATICS_FIVEAXISROBOTKINEMATICS_H_ */
-
