@@ -517,7 +517,7 @@ float FiveAxisRobotKinematics::getAngle1(float x, float y, float z) const {
 	 if(axis2yis0) {		// arm 2 through axis 1
 		 float xdiff = x - axis1coords[0];
 		 float ydiff = y - axis1coords[1];
-		 angle1 = atan(xdiff/ydiff) * 180.0 / Pi;
+		 angle1 = atan(ydiff/xdiff) * 180.0 / Pi;
 	 }
 	 else {
 		 if(y == axis2coords[1]) {
