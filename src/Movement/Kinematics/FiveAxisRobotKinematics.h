@@ -56,7 +56,6 @@ public:
 
 protected:
 	DECLARE_OBJECT_MODEL
-	OBJECT_MODEL_ARRAY(towers)
 
 private:
 	static constexpr const char *Home5AxisRobotFileName = "home5axisrobot.g";
@@ -66,7 +65,7 @@ private:
 	void Recalc() noexcept;
 	void optimizeCode(int32_t valInt);
 	void getIntersec(float result12[], float firstRadius, float secondRadius, float firstX, float firstY, float secondX, float secondY) const noexcept;
-	void getIntersectionUpper(float _axis1x, float _axis1y, float _axis2y, float xmid, float ymid, float radiusMid, float tangent[]) const;
+	bool getIntersectionUpper(float _axis1x, float _axis1y, float _axis2y, float xmid, float ymid, float radiusMid, float tangent[]) const;
 	float getAngle1(float x, float y, float z) const;
 	void getAxis2Coords(float angle1, float axis2coords[]) const;
 	void getAxis3Coords(float angle1, const float axis2coords[], const float axis4coords[], float axis3coords[],
@@ -79,23 +78,23 @@ private:
 	float axis2coords[3];		// XYZ
 	float axis6coords[1];		// Y rail 6th axis
 	bool axis2yis0 = false;		// if true, arm 2 goes through axis 1
-	bool useRail;				// if rail is used
-	int32_t currentPstrategy;	// current P setting
+	bool useRail = false;				// if rail is used
+	int32_t currentPstrategy = 4;	// current P setting, 4 is the default
 	int32_t previousPstrategy;	// if P6, store value where it shall return
 	float arm2length;		// starting at axis2
 	float arm3length;		// starting at axis3
 	float arm4length;		// starting at axis4
 	float arm5length;		// starting at axis5
 
-	float angle1limits[2];	// limit angle1 of vertical axis1 min and max (including values both)
-	float angle2limits[2];	// limit angle2 of axis2 min and max (including values both)
-	float angle3limits[2];	// limit angle3 of axis3 min and max (including values both)
-	float angle4limits[2];	// limit angle4 of axis4 min and max (including values both)
-	float angle5limits[2];	// limit angle5 of vertical axis5 min and max (including values both)
+	float angle1limits[2] = {-45.0, 45.0};	// limit angle1 of vertical axis1 min and max (including values both)
+	float angle2limits[2] = {0.0, 75.0};	// limit angle2 of axis2 min and max (including values both)
+	float angle3limits[2] = {-5.0, -75.0};	// limit angle3 of axis3 min and max (including values both)
+	float angle4limits[2] = {-170.0, 170.0};	// limit angle4 of axis4 min and max (including values both)
+	float angle5limits[2] = {-135.0, 135.0};	// limit angle5 of vertical axis5 min and max (including values both)
 
-	float arm2bendingFactor;	// B parameter a2 value
-	float arm3bendingFactor;	// B parameter a3 value
-	float arm5bendingFactor;	// B parameter a5 value
+	float arm2bendingFactor = 0.0;	// B parameter a2 value
+	float arm3bendingFactor = 0.0;	// B parameter a3 value
+	float arm5bendingFactor = 0.0;	// B parameter a5 value
 
 };
 
