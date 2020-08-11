@@ -137,12 +137,7 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			gb.TryGetIValue('P', valInt, seen);
 			if(seen) {
 				currentPstrategy = val;
-				previousPstrategy = 0;
 			}
-		}
-		else {
-			currentPstrategy = 0;
-			previousPstrategy = 0;
 		}
 
 		if (gb.Seen('L')) {		// arm 2 to 5 lengths
@@ -169,18 +164,6 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 				angle5limits[0] = arr[8];
 				angle5limits[1] = arr[9];
 			}
-		}
-		else {		// set A defaults
-			angle1limits[0] = -45.0;
-			angle1limits[1] = 45.0;
-			angle2limits[0] = 0.0;
-			angle2limits[1] = 75.0;
-			angle3limits[0] = -5.0;
-			angle3limits[1] = -75.0;
-			angle4limits[0] = -170.0;
-			angle4limits[1] = 170.0;
-			angle5limits[0] = -135.0;
-			angle5limits[1] = 135.0;
 		}
 
 		if (gb.Seen('S')) {
