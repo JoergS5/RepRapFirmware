@@ -360,8 +360,8 @@ bool FiveAxisRobotKinematics::IsReachable(float x, float y, bool isCoordinated) 
 	}
 
 	//test y
-	float yMin = platform.AxisMinimum(0) - AxisRoundingError;
-	float yMax = platform.AxisMaximum(0) + AxisRoundingError;
+	float yMin = platform.AxisMinimum(1) - AxisRoundingError;
+	float yMax = platform.AxisMaximum(1) + AxisRoundingError;
 	if(y < yMin || y > yMax) {
 		reachable = false;
 	}
