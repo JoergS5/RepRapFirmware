@@ -282,7 +282,7 @@ void FiveAxisRobotKinematics::MotorStepsToCartesian(const int32_t motorPos[], co
 	 float angle1 = (float) motorPos[0] / stepsPerMm[0];
 	 float angle2 = (float) motorPos[1] / stepsPerMm[1];
 	 float angle3 = (float) motorPos[2] / stepsPerMm[2];
-	 //float angle4 = (float) motorPos[3] / stepsPerMm[3];
+	 float angle4 = (float) motorPos[3] / stepsPerMm[3];
 	 float angle5 = (float) motorPos[4] / stepsPerMm[4];
 
 	 float x = axis2coords[0];
@@ -302,8 +302,10 @@ void FiveAxisRobotKinematics::MotorStepsToCartesian(const int32_t motorPos[], co
 	 z += l3angledZ;
 
 	 // position axis 5
-	 z -= arm4length;
-	 // todo: correct it or not?: if angle4 is wrong, calculate correct position of axis4 and axis5
+	 float l4angled = cos((angle2+angle3+angle4)/360.0*2.0*Pi) * arm4length;
+	 x += l4angled;
+	 float l4angledZ = sin((angle2+angle3+angle4)/360.0*2.0*Pi) * arm4length;
+	 z += l4angledZ;
 
 	 // position nozzle
 	 float l5angled = cos(angle5/360.0*2.0*Pi) * arm5length;
