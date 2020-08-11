@@ -136,7 +136,7 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 		if (gb.Seen('P')) {
 			gb.TryGetIValue('P', valInt, seen);
 			if(seen) {
-				currentPstrategy = val;
+				currentPstrategy = valInt;
 			}
 		}
 
