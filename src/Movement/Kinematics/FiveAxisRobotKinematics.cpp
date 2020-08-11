@@ -295,39 +295,39 @@ void FiveAxisRobotKinematics::MotorStepsToCartesian(const int32_t motorPos[], co
 	 float l2angledZ = sin(angle2/360.0*2.0*Pi) * arm2length;
 	 z += l2angledZ;
 
-		// position axis 4
-		float l3angled = cos((angle2+angle3)/360.0*2.0*Pi) * arm3length;
-		x += l3angled;
-		float l3angledZ = sin((angle2+angle3)/360.0*2.0*Pi) * arm3length;
-		z += l3angledZ;
+	 // position axis 4
+	 float l3angled = cos((angle2+angle3)/360.0*2.0*Pi) * arm3length;
+	 x += l3angled;
+	 float l3angledZ = sin((angle2+angle3)/360.0*2.0*Pi) * arm3length;
+	 z += l3angledZ;
 
-		// position axis 5
-		z -= arm4length;
-		// todo: correct it or not?: if angle4 is wrong, calculate correct position of axis4 and axis5
+	 // position axis 5
+	 z -= arm4length;
+	 // todo: correct it or not?: if angle4 is wrong, calculate correct position of axis4 and axis5
 
-		// position nozzle
-		float l5angled = cos(angle5/360.0*2.0*Pi) * arm5length;
-		x += l5angled;
-		float l5angledY = sin(angle5/360.0*2.0*Pi) * arm5length;
-		y += l5angledY;
+	 // position nozzle
+	 float l5angled = cos(angle5/360.0*2.0*Pi) * arm5length;
+	 x += l5angled;
+	 float l5angledY = sin(angle5/360.0*2.0*Pi) * arm5length;
+	 y += l5angledY;
 
-		// rotate axis 1
-		// set rotation orig:
-		float origX = x - axis1coords[0];
-		float origY = y - axis1coords[1];
+	 // rotate axis 1
+	 // set rotation orig:
+	 float origX = x - axis1coords[0];
+	 float origY = y - axis1coords[1];
 
-		float sinangle = sin(angle1/360.0*2.0*Pi);
-		float cosangle = cos(angle1/360.0*2.0*Pi);
-		x = origX * cosangle - origY * sinangle;
-		y = origX * sinangle + origY * cosangle;
+	 float sinangle = sin(angle1/360.0*2.0*Pi);
+	 float cosangle = cos(angle1/360.0*2.0*Pi);
+	 x = origX * cosangle - origY * sinangle;
+	 y = origX * sinangle + origY * cosangle;
 
-		// correct back rotation orig
-		x += axis1coords[0];
-		y += axis1coords[1];
+	 // correct back rotation orig
+	 x += axis1coords[0];
+	 y += axis1coords[1];
 
-		machinePos[0] = x;
-		machinePos[1] = y;
-		machinePos[2] = z;
+	 machinePos[0] = x;
+	 machinePos[1] = y;
+	 machinePos[2] = z;
 }
 
 bool FiveAxisRobotKinematics::DoAutoCalibration(size_t numFactors, const RandomProbePointSet& probePoints, const StringRef& reply) noexcept {
