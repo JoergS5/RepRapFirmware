@@ -477,8 +477,6 @@ bool FiveAxisRobotKinematics::getIntersectionUpper(float x1, float y1, float rad
 
 		 tangent[0] = xIntersec;
 		 tangent[1] = yIntersec;
-		 tangent[2] = xIntersec;
-		 tangent[3] = yIntersec;
 	 }
 	 else if(distance > radsum) { // no intersection
 		 error = true;
