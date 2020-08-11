@@ -607,7 +607,7 @@ void FiveAxisRobotKinematics::getAxis3Coords(float angle1, const float axis2c[],
 			 + fsquare(axis2c[2]-axis4c[2]));
 
 	 // get triangle of arm2 and arm3 above the line
-	 float temp3[4];
+	 float temp3[2];
 	 getIntersectionUpper(0, 0, arm2length, dist2to4, 0, arm3length, temp3);
 	 // angle between horizontal line and axis3
 	 float angle2uncorrected = asin(temp3[1]/arm2length) * 180.0 / Pi;
