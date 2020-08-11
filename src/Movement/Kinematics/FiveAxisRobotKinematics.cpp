@@ -353,11 +353,31 @@ float FiveAxisRobotKinematics::GetTiltCorrection(size_t axis) const noexcept {
 }
 
 bool FiveAxisRobotKinematics::IsReachable(float x, float y, bool isCoordinated) const noexcept {
-	return true;
+	const Platform& platform = reprap.GetPlatform();
+	bool reachable = true;
+
+	// test x
+	float xMin = platform.AxisMinimum(0) - AxisRoundingError;
+	float xMax = platform.AxisMaximum(0) + AxisRoundingError;
+	if(x < xMin || x > xMax) {
+		reachable = false;
+	}
+
+	//test y
+	float yMin = platform.AxisMinimum(0) - AxisRoundingError;
+	float yMax = platform.AxisMaximum(0) + AxisRoundingError;
+	if(y < yMin || y > yMax) {
+		reachable = false;
+	}
+	return reachable;
 }
 
 LimitPositionResult FiveAxisRobotKinematics::LimitPosition(float finalCoords[], const float * null initialCoords, size_t numVisibleAxes, AxesBitmap axesHomed, bool isCoordinated, bool applyM208Limits) const noexcept {
-	return LimitPositionResult::ok;
+
+	// First limit all axes according to M208
+	const bool m208Limited = applyM208Limits && Kinematics::LimitPositionFromAxis(finalCoords, 0, numVisibleAxes, axesHomed);
+
+	return (m208Limited) ? LimitPositionResult::adjusted : LimitPositionResult::ok;
 }
 
 void FiveAxisRobotKinematics::GetAssumedInitialPosition(size_t numAxes, float positions[]) const noexcept {
