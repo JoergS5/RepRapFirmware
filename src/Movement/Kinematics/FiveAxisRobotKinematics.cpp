@@ -54,6 +54,7 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 	// 2. kinematics members special
 	{ "arm2bendingFactor",	OBJECT_MODEL_FUNC(self->arm2bendingFactor, 3), ObjectModelEntryFlags::none },
 	{ "arm3bendingFactor",	OBJECT_MODEL_FUNC(self->arm3bendingFactor, 3), ObjectModelEntryFlags::none },
+	{ "arm4vertical",	OBJECT_MODEL_FUNC(self->arm4vertical, 3), ObjectModelEntryFlags::none },
 	{ "arm5bendingFactor",	OBJECT_MODEL_FUNC(self->arm5bendingFactor, 3), ObjectModelEntryFlags::none },
 	{ "currentP", 				OBJECT_MODEL_FUNC(self->currentPstrategy), ObjectModelEntryFlags::none },
 
@@ -67,7 +68,7 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 
 
 // number of groups, number of entries for each group:
-constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 4, 11, 4, 4, 5 };
+constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 4, 11, 4, 5, 5 };
 
 DEFINE_GET_OBJECT_MODEL_TABLE(FiveAxisRobotKinematics)
 
@@ -137,6 +138,7 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			gb.TryGetIValue('P', valInt, seen);
 			if(seen) {
 				currentPstrategy = valInt;
+				arm4vertical = true;
 			}
 		}
 
