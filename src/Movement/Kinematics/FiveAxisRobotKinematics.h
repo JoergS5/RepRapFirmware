@@ -78,6 +78,7 @@ private:
 	float axis2coords[3];		// XYZ
 	float axis6coords[1];		// Y rail 6th axis
 	bool axis2yis0 = false;		// if true, arm 2 goes through axis 1
+	bool arm4vertical = true;	// default behaviour
 	bool useRail = false;				// if rail is used
 	int32_t currentPstrategy = 4;	// current P setting, 4 is the default
 	int32_t previousPstrategy;	// if P6, store value where it shall return
