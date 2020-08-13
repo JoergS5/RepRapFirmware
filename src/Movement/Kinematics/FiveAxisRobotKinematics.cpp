@@ -657,25 +657,19 @@ void FiveAxisRobotKinematics::getAxis3Coords(float angle1, const float axis2c[],
 
 bool FiveAxisRobotKinematics::constraintsOk(const float angles[]) const noexcept
 {
-	float angle1 = angles[0];
-	float angle2 = angles[1];
-	float angle3 = angles[2];
-	float angle4 = angles[3];
-	float angle5 = angles[4];
-
-	if(angle1 < angle1limits[0] || angle1 > angle1limits[1]) {
+	if(angles[0] < angle1limits[0] || angles[0] > angle1limits[1]) {
 			return false;
 	}
-	if(angle2 < angle2limits[0] || angle2 > angle2limits[1]) {
+	if(angles[1] < angle2limits[0] || angles[1] > angle2limits[1]) {
 			return false;
 	}
-	if(angle3 < angle3limits[0] || angle3 > angle3limits[1]) {
+	if(angles[2] < angle3limits[0] || angles[2] > angle3limits[1]) {
 			return false;
 	}
-	if(angle4 < angle4limits[0] || angle4 > angle4limits[1]) {
+	if(angles[3] < angle4limits[0] || angles[3] > angle4limits[1]) {
 			return false;
 	}
-	if(angle5 < angle5limits[0] || angle5 > angle5limits[1]) {
+	if(angles[4] < angle5limits[0] || angles[4] > angle5limits[1]) {
 			return false;
 	}
 
