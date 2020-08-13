@@ -271,6 +271,16 @@ bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], co
 		 // todo report error
 	 }
 
+	 float angles[5];
+	 angles[0] = angle1;
+	 angles[1] = angles234[0];
+	 angles[2] = angles234[1];;
+	 angles[3] = angles234[2];;
+	 angles[4] = angle5;
+	 if(!constraintsOk(angles)) {
+		 return false;
+	 }
+
 	 motorPos[0] = int32_t(angle1 * stepsPerMm[0]);
 	 motorPos[1] = int32_t(angles234[0] * stepsPerMm[1]);
 	 motorPos[2] = int32_t(angles234[1] * stepsPerMm[2]);
@@ -376,6 +386,9 @@ LimitPositionResult FiveAxisRobotKinematics::LimitPosition(float finalCoords[], 
 
 	// First limit all axes according to M208
 	const bool m208Limited = applyM208Limits && Kinematics::LimitPositionFromAxis(finalCoords, 0, numVisibleAxes, axesHomed);
+
+	// todo should angle limits be considered here also? Then inverse kinematics must be calculated here first,
+	// calling constraintsOk() after. But not all parameters of CartesianToMotorSteps are available here (stepsPerMm eg).
 
 	return (m208Limited) ? LimitPositionResult::adjusted : LimitPositionResult::ok;
 }
@@ -642,3 +655,29 @@ void FiveAxisRobotKinematics::getAxis3Coords(float angle1, const float axis2c[],
 	 angles234[2] = angle4;
 }
 
+bool FiveAxisRobotKinematics::constraintsOk(const float angles[]) const noexcept
+{
+	float angle1 = angles[0];
+	float angle2 = angles[1];
+	float angle3 = angles[2];
+	float angle4 = angles[3];
+	float angle5 = angles[4];
+
+	if(angle1 < angle1limits[0] || angle1 > angle1limits[1]) {
+			return false;
+	}
+	if(angle2 < angle2limits[0] || angle2 > angle2limits[1]) {
+			return false;
+	}
+	if(angle3 < angle3limits[0] || angle3 > angle3limits[1]) {
+			return false;
+	}
+	if(angle4 < angle4limits[0] || angle4 > angle4limits[1]) {
+			return false;
+	}
+	if(angle5 < angle5limits[0] || angle5 > angle5limits[1]) {
+			return false;
+	}
+
+	return true;
+}
