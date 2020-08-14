@@ -66,7 +66,8 @@ private:
 	void optimizeCode(int32_t valInt);
 	bool constraintsOk(const float angles[]) const noexcept;
 	void getIntersec(float result12[], float firstRadius, float secondRadius, float firstX, float firstY, float secondX, float secondY) const noexcept;
-	bool getIntersectionUpper(float _axis1x, float _axis1y, float _axis2y, float xmid, float ymid, float radiusMid, float tangent[]) const;
+	bool getIntersectionUpper(float _axis1x, float _axis1y, float _axis2y, float xmid, float ymid, float radiusMid,
+			float tangent[], bool upper) const;
 	float getAngle1(float x, float y, float z) const;
 	void getAxis2Coords(float angle1, float axis2coords[]) const;
 	void getAxis3Coords(float angle1, const float axis2coords[], const float axis4coords[], float axis3coords[],
