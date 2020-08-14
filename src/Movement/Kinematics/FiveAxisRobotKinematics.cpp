@@ -485,7 +485,7 @@ void FiveAxisRobotKinematics::Recalc() noexcept {
 }
 
 bool FiveAxisRobotKinematics::getIntersectionUpper(float x1, float y1, float rad1, float x2, float y2,
-		 	float rad2, float tangent[]) const {
+		 	float rad2, float tangent[], bool upper) const {
 
 	bool error = false;
 
@@ -509,13 +509,25 @@ bool FiveAxisRobotKinematics::getIntersectionUpper(float x1, float y1, float rad
 	 else {
 		 float result[4];
 		 getIntersec(result, rad1, rad2, x1, y1, x2, y2);
-		 if(result[1] >= result[3]) {
-			 tangent[0] = result[0];
-			 tangent[1] = result[1];
+		 if(upper) {
+			 if(result[1] >= result[3]) {
+				 tangent[0] = result[0];
+				 tangent[1] = result[1];
+			 }
+			 else {
+				 tangent[0] = result[2];
+				 tangent[1] = result[3];
+			 }
 		 }
 		 else {
-			 tangent[0] = result[2];
-			 tangent[1] = result[3];
+			 if(result[1] < result[3]) {
+				 tangent[0] = result[0];
+				 tangent[1] = result[1];
+			 }
+			 else {
+				 tangent[0] = result[2];
+				 tangent[1] = result[3];
+			 }
 		 }
 	 }
 	 return error;
@@ -577,16 +589,17 @@ float FiveAxisRobotKinematics::getAngle1(float x, float y, float z) const {
 			 float xmid = (x + axis1coords[0]) / 2.0;
 			 float ymid = (y + axis1coords[1]) / 2.0;
 			 float radiusMid = sqrt(fsquare(x-axis1coords[0]) + fsquare(y-axis1coords[1])) / 2.0;
-			 if(getIntersectionUpper(axis1coords[0], axis1coords[1], (axis2coords[1]-axis1coords[1]),
-					 xmid, ymid, radiusMid, tangent)) {
-				 float xdiff = x - tangent[0];
-				 float ydiff = y - tangent[1];
-				 angle1 = atan(ydiff/xdiff) * 180.0 / Pi;
+			 if(axis1coords[1] < axis2coords[1]) {
+				 getIntersectionUpper(axis1coords[0], axis1coords[1], (axis2coords[1]-axis1coords[1]), xmid, ymid,
+						 radiusMid, tangent, true);
 			 }
 			 else {
-				 // todo report error (how?)
-				 angle1 = 0.0;
+				 getIntersectionUpper(axis1coords[0], axis1coords[1], (-axis2coords[1]+axis1coords[1]), xmid, ymid,
+						 radiusMid, tangent, false);
 			 }
+			 float xdiff = x - tangent[0];
+			 float ydiff = y - tangent[1];
+			 angle1 = atan(ydiff/xdiff) * 180.0 / Pi;
 		 }
 	 }
 	 return angle1;
@@ -632,7 +645,7 @@ void FiveAxisRobotKinematics::getAxis3Coords(float angle1, const float axis2c[],
 
 	 // get triangle of arm2 and arm3 above the line
 	 float temp3[2];
-	 getIntersectionUpper(0, 0, arm2length, dist2to4, 0, arm3length, temp3);
+	 getIntersectionUpper(0, 0, arm2length, dist2to4, 0, arm3length, temp3, true);
 	 // angle between horizontal line and axis3
 	 float angle2uncorrected = asin(temp3[1]/arm2length) * 180.0 / Pi;
 
