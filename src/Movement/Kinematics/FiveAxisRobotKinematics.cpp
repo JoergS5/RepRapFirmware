@@ -301,28 +301,30 @@ void FiveAxisRobotKinematics::MotorStepsToCartesian(const int32_t motorPos[], co
 	 float y = axis2coords[1];
 	 float z = axis2coords[2];
 
+	 // first calculate nozzle endpoint with axis1 unrotated, then rotate by axis1
+
 	 // position axis 3
-	 float l2angledX = cos(angle2/360.0*2.0*Pi) * arm2length;
+	 float l2angledX = cos(angle2/180.0*Pi) * arm2length;
 	 x += l2angledX;
-	 float l2angledZ = sin(angle2/360.0*2.0*Pi) * arm2length;
+	 float l2angledZ = sin(angle2/180.0*Pi) * arm2length;
 	 z += l2angledZ;
 
 	 // position axis 4
-	 float l3angled = cos((angle2+angle3)/360.0*2.0*Pi) * arm3length;
+	 float l3angled = cos((angle2+angle3)/180.0*Pi) * arm3length;
 	 x += l3angled;
-	 float l3angledZ = sin((angle2+angle3)/360.0*2.0*Pi) * arm3length;
+	 float l3angledZ = sin((angle2+angle3)/180.0*Pi) * arm3length;
 	 z += l3angledZ;
 
 	 // position axis 5
-	 float l4angled = cos((angle2+angle3+angle4)/360.0*2.0*Pi) * arm4length;
+	 float l4angled = cos((angle2+angle3+angle4)/180.0*Pi) * arm4length;
 	 x += l4angled;
-	 float l4angledZ = sin((angle2+angle3+angle4)/360.0*2.0*Pi) * arm4length;
+	 float l4angledZ = sin((angle2+angle3+angle4)/180.0*Pi) * arm4length;
 	 z += l4angledZ;
 
 	 // position nozzle
-	 float l5angled = cos(angle5/360.0*2.0*Pi) * arm5length;
+	 float l5angled = cos(angle5/180.0*Pi) * arm5length;
 	 x += l5angled;
-	 float l5angledY = sin(angle5/360.0*2.0*Pi) * arm5length;
+	 float l5angledY = sin(angle5/180.0*Pi) * arm5length;
 	 y += l5angledY;
 
 	 // rotate axis 1
@@ -330,8 +332,8 @@ void FiveAxisRobotKinematics::MotorStepsToCartesian(const int32_t motorPos[], co
 	 float origX = x - axis1coords[0];
 	 float origY = y - axis1coords[1];
 
-	 float sinangle = sin(angle1/360.0*2.0*Pi);
-	 float cosangle = cos(angle1/360.0*2.0*Pi);
+	 float sinangle = sin(angle1/180.0*Pi);
+	 float cosangle = cos(angle1/180.0*Pi);
 	 x = origX * cosangle - origY * sinangle;
 	 y = origX * sinangle + origY * cosangle;
 
@@ -591,8 +593,8 @@ void FiveAxisRobotKinematics::getAxis4Coords(const float axis5c[], float axis4c[
 
 // is only called with currentPstrategy == 4
 void FiveAxisRobotKinematics::getAxis5Coords(float x, float y, float z, float angle1, float axis5c[]) const {
-	 float sinangle = sin(angle1/360.0*2.0*Pi);
-	 float cosangle = cos(angle1/360.0*2.0*Pi);
+	 float sinangle = sin(angle1/180.0*Pi);
+	 float cosangle = cos(angle1/180.0*Pi);
 
 	 float ydiff = sinangle * arm5length;
 	 float xdiff = cosangle * arm5length;
@@ -603,8 +605,8 @@ void FiveAxisRobotKinematics::getAxis5Coords(float x, float y, float z, float an
 }
 
 void FiveAxisRobotKinematics::getAxis2Coords(float angle1, float axis2c[]) const {
-	 float sinangle = sin(angle1/360.0*2.0*Pi);
-	 float cosangle = cos(angle1/360.0*2.0*Pi);
+	 float sinangle = sin(angle1/180.0*Pi);
+	 float cosangle = cos(angle1/180.0*Pi);
 	 float x2rotateby0 = axis2coords[0] - axis1coords[0];
 	 float y2rotateby0 = axis2coords[1] - axis1coords[1];
 	 float x2new = x2rotateby0 * cosangle - y2rotateby0 * sinangle;
