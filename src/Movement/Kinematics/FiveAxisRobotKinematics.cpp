@@ -212,10 +212,12 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 		{
 			reply.catf("Kinematics FiveAxisRobot");
 			reply.catf(", arm2length %.3f, arm3length %.3f, arm4length %.3f, arm5length %.3f"
-					", axis1 x %.3f, axis1 y %.3f, axis 2 x %.3f, axis 2 y %.3f, axis 2 z %.3f",
+					", axis1 x %.3f, axis1 y %.3f, axis 2 x %.3f, axis 2 y %.3f, axis 2 z %.3f"
+					", P%i",
 					(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length,
 					(double) axis1coords[0], (double) axis1coords[1],
-					(double) axis2coords[0], (double) axis2coords[1], (double) axis2coords[2]);
+					(double) axis2coords[0], (double) axis2coords[1], (double) axis2coords[2],
+					(int) currentPstrategy);
 		}
 
 		return seen;
