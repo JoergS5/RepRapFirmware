@@ -210,8 +210,9 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 		}
 		else if (!seenNonGeometry && !gb.Seen('K'))
 		{
-			//TODO print all the parameters here
-			reply.printf("Kinematics is FiveAxisRobot, documented in https://duet3d.dozuki.com/Wiki/Configuring_RepRapFirmware_for_a_FiveAxisRobot?revisionid=HEAD");
+			reply.catf("Kinematics FiveAxisRobot");
+			reply.catf(", arm2length %.3f, arm3length %.3f, arm4length %.3f, arm5length %.3f",
+					(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length);
 		}
 
 		return seen;
