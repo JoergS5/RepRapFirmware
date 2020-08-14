@@ -19,6 +19,8 @@
 
 //#define debugPrintf if(0) debugPrintf
 
+#define ROUND_2_INT(f) ((int32_t)(f >= 0.0 ? (f + 0.5) : (f - 0.5)))
+
 #if SUPPORT_OBJECT_MODEL
 
 // Object model table and functions
@@ -287,11 +289,11 @@ bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], co
 		 return false;
 	 }
 
-	 motorPos[0] = int32_t(angle1 * stepsPerMm[0]);
-	 motorPos[1] = int32_t(angles234[0] * stepsPerMm[1]);
-	 motorPos[2] = int32_t(angles234[1] * stepsPerMm[2]);
-	 motorPos[3] = int32_t(angles234[2] * stepsPerMm[3]);
-	 motorPos[4] = int32_t(angle5 * stepsPerMm[4]);
+	 motorPos[0] = ROUND_2_INT(angle1 * stepsPerMm[0]);
+	 motorPos[1] = ROUND_2_INT(angles234[0] * stepsPerMm[1]);
+	 motorPos[2] = ROUND_2_INT(angles234[1] * stepsPerMm[2]);
+	 motorPos[3] = ROUND_2_INT(angles234[2] * stepsPerMm[3]);
+	 motorPos[4] = ROUND_2_INT(angle5 * stepsPerMm[4]);
 
 	 return true;
 }
