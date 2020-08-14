@@ -559,7 +559,6 @@ void FiveAxisRobotKinematics::getIntersec(float result[], float firstRadius, flo
 
 // get angle1 for axis1
 // called by inverse kinematics
-// find tangent https://silo.tips/download/geometrie-dossier-kreis-2 section Grundkonstruktion 2
 // xyz is the nozzle endpoint (P4) or the axis5 coordinate (P2, P3)
 float FiveAxisRobotKinematics::getAngle1(float x, float y, float z) const {
 	 float angle1;	// angle of axis 1 CCW
