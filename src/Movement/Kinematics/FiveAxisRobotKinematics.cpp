@@ -58,7 +58,7 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 	{ "arm3bendingFactor",	OBJECT_MODEL_FUNC(self->arm3bendingFactor, 3), ObjectModelEntryFlags::none },
 	{ "arm4vertical",	OBJECT_MODEL_FUNC(self->arm4vertical, 3), ObjectModelEntryFlags::none },
 	{ "arm5bendingFactor",	OBJECT_MODEL_FUNC(self->arm5bendingFactor, 3), ObjectModelEntryFlags::none },
-	{ "currentP", 				OBJECT_MODEL_FUNC(self->currentPstrategy), ObjectModelEntryFlags::none },
+	{ "pMode", 				OBJECT_MODEL_FUNC(self->pMode), ObjectModelEntryFlags::none },
 
 	// 3. kinematics members axis
 	{ "axis1coordsX",	OBJECT_MODEL_FUNC(self->axis1coords[0], 3), ObjectModelEntryFlags::none },
@@ -139,7 +139,7 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 		if (gb.Seen('P')) {
 			gb.TryGetIValue('P', valInt, seen);
 			if(seen) {
-				currentPstrategy = valInt;
+				pMode = valInt;
 				arm4vertical = true;
 			}
 		}
@@ -219,7 +219,7 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 					(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length,
 					(double) axis1coords[0], (double) axis1coords[1],
 					(double) axis2coords[0], (double) axis2coords[1], (double) axis2coords[2],
-					(int) currentPstrategy);
+					(int) pMode);
 		}
 
 		return seen;
@@ -245,7 +245,15 @@ bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], co
 	 float ax4Inv[3];
 	 float ax5Inv[3];
 
-	 if(currentPstrategy == 2) { // axis5 parallel to x
+	 if(pMode == 0) {
+		 angle1 = getAngle1(x, y, z);
+		 getAxis2Coords(angle1, ax2Inv);
+		 getAxis5Coords(x, y, z, angle1, ax5Inv);
+		 getAxis4Coords(ax5Inv, ax4Inv);
+		 getAxis3Coords(angle1, ax2Inv, ax4Inv, ax3Inv, angles234);
+		 angle5 = 0;
+	 }
+	 else if(pMode == 2) { // axis5 parallel to x
 		 ax5Inv[0] = x - arm5length;
 		 ax5Inv[1] = y;
 		 ax5Inv[2] = z;
@@ -255,28 +263,9 @@ bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], co
 		 getAxis3Coords(angle1, ax2Inv, ax4Inv, ax3Inv, angles234);
 		 angle5 = - angle1;
 	 }
-	 else if(currentPstrategy == 3) { // axis5 parallel to y
-		 ax5Inv[0] = x;
-		 ax5Inv[1] = y - arm5length;
-		 ax5Inv[2] = z;
-		 angle1 = getAngle1(ax5Inv[0], ax5Inv[1], ax5Inv[2]);
-		 getAxis2Coords(angle1, ax2Inv);
-		 getAxis4Coords(ax5Inv, ax4Inv);
-		 getAxis3Coords(angle1, ax2Inv, ax4Inv, ax3Inv, angles234);
-		 angle5 = - angle1 + 90.0;
-	 }
-	 else if(currentPstrategy == 4) {
-		 angle1 = getAngle1(x, y, z);
-		 getAxis2Coords(angle1, ax2Inv);
-		 getAxis5Coords(x, y, z, angle1, ax5Inv);
-		 getAxis4Coords(ax5Inv, ax4Inv);
-		 getAxis3Coords(angle1, ax2Inv, ax4Inv, ax3Inv, angles234);
-		 angle5 = 0;
-	 }
-	 else {
-		 angle1 = -999;
-		 angle5 = -999;
-		 // todo report error
+	  else {
+		  // todo report error
+		  return false;
 	 }
 
 	 float angles[5];
@@ -611,7 +600,7 @@ void FiveAxisRobotKinematics::getAxis4Coords(const float axis5c[], float axis4c[
 	 axis4c[2] = axis5c[2] + arm4length;	// axis4 is always vertical above axis5
 }
 
-// is only called with currentPstrategy == 4
+// is only called with pMode == 0
 void FiveAxisRobotKinematics::getAxis5Coords(float x, float y, float z, float angle1, float axis5c[]) const {
 	 float sinangle = sin(angle1/180.0*Pi);
 	 float cosangle = cos(angle1/180.0*Pi);
