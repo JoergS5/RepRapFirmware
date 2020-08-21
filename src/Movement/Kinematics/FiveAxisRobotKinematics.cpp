@@ -77,7 +77,7 @@ DEFINE_GET_OBJECT_MODEL_TABLE(FiveAxisRobotKinematics)
 #endif
 
 FiveAxisRobotKinematics::FiveAxisRobotKinematics() noexcept
-	: Kinematics(KinematicsType::fiveAxisRobot, DefaultSegmentsPerSecond, DefaultMinSegmentSize, true)
+	: Kinematics(KinematicsType::robot5axis, DefaultSegmentsPerSecond, DefaultMinSegmentSize, true)
 {
 	Recalc();
 }
