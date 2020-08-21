@@ -60,6 +60,7 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 	{ "arm4vertical",	OBJECT_MODEL_FUNC(self->arm4vertical, 3), ObjectModelEntryFlags::none },
 	{ "arm5bendingFactor",	OBJECT_MODEL_FUNC(self->arm5bendingFactor, 3), ObjectModelEntryFlags::none },
 	{ "pMode", 				OBJECT_MODEL_FUNC(self->pMode), ObjectModelEntryFlags::none },
+	{ "rMode", 				OBJECT_MODEL_FUNC(self->rMode), ObjectModelEntryFlags::none },
 
 	// 3. kinematics members axis
 	{ "axis1coordsX",	OBJECT_MODEL_FUNC(self->axis1coords[0], 3), ObjectModelEntryFlags::none },
@@ -71,7 +72,7 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 
 
 // number of groups, number of entries for each group:
-constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 4, 11, 4, 5, 5 };
+constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 4, 11, 4, 6, 5 };
 
 DEFINE_GET_OBJECT_MODEL_TABLE(FiveAxisRobotKinematics)
 
@@ -138,10 +139,22 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 		}
 
 		if (gb.Seen('P')) {
-			gb.TryGetIValue('P', valInt, seen);
-			if(seen) {
-				pMode = valInt;
+			gb.GetFloatArray(arr, length, false);
+			if(length == 1) {
+				pMode = (int32_t) arr[0];
 				arm4vertical = true;
+			}
+			else if(length == 2) {
+				pMode = (int32_t) arr[0];	// todo report error if not 2
+				p2Angle = arr[1];
+				arm4vertical = true;
+			}
+		}
+
+		if (gb.Seen('R')) {
+			gb.TryGetIValue('R', valInt, seen);
+			if(seen) {
+				rMode = valInt;
 			}
 		}
 
