@@ -83,6 +83,9 @@ private:
 	bool arm4vertical = true;	// default behaviour
 	bool useRail = false;				// if rail is used
 	int32_t pMode = 0;		// P setting
+	float p2Angle = 0.0;		// only relevant for P2 mode
+	int32_t rMode = 0;		// R setting
+
 	float arm2length;		// starting at axis2
 	float arm3length;		// starting at axis3
 	float arm4length;		// starting at axis4
