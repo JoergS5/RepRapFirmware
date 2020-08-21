@@ -90,7 +90,7 @@ private:
 
 	float angle1limits[2] = {-45.0, 45.0};	// limit angle1 of vertical axis1 min and max (including values both)
 	float angle2limits[2] = {0.0, 75.0};	// limit angle2 of axis2 min and max (including values both)
-	float angle3limits[2] = {-5.0, -75.0};	// limit angle3 of axis3 min and max (including values both)
+	float angle3limits[2] = {-75.0, -5.0};	// limit angle3 of axis3 min and max (including values both)
 	float angle4limits[2] = {-170.0, 170.0};	// limit angle4 of axis4 min and max (including values both)
 	float angle5limits[2] = {-135.0, 135.0};	// limit angle5 of vertical axis5 min and max (including values both)
 
