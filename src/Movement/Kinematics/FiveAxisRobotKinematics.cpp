@@ -20,6 +20,7 @@
 //#define debugPrintf if(0) debugPrintf
 
 #define ROUND_2_INT(f) ((int32_t)(f >= 0.0 ? (f + 0.5) : (f - 0.5)))
+#define FLOATERROR 0.001
 
 #if SUPPORT_OBJECT_MODEL
 
@@ -667,22 +668,20 @@ void FiveAxisRobotKinematics::getAxis3Coords(float angle1, const float axis2c[],
 }
 
 bool FiveAxisRobotKinematics::constraintsOk(const float angles[]) const noexcept
-{
-	if(angles[0] < angle1limits[0] || angles[0] > angle1limits[1]) {
-			return false;
-	}
-	if(angles[1] < angle2limits[0] || angles[1] > angle2limits[1]) {
-			return false;
-	}
-	if(angles[2] < angle3limits[0] || angles[2] > angle3limits[1]) {
-			return false;
-	}
-	if(angles[3] < angle4limits[0] || angles[3] > angle4limits[1]) {
-			return false;
-	}
-	if(angles[4] < angle5limits[0] || angles[4] > angle5limits[1]) {
-			return false;
-	}
-
-	return true;
-}
+ 	if(angles[0] < angle1limits[0] - FLOATERROR || angles[0] > angle1limits[1] + FLOATERROR) {
+ 		return false;
+ 	}
+ 	if(angles[1] < angle2limits[0] - FLOATERROR || angles[1] > angle2limits[1] + FLOATERROR) {
+ 		return false;
+ 	}
+ 	if(angles[2] < angle3limits[0] - FLOATERROR || angles[2] > angle3limits[1]+ FLOATERROR) {
+		return false;
+ 	}
+ 	if(angles[3] < angle4limits[0] - FLOATERROR || angles[3] > angle4limits[1] + FLOATERROR) {
+		return false;
+ 	}
+ 	if(angles[4] < angle5limits[0] - FLOATERROR || angles[4] > angle5limits[1] + FLOATERROR) {
+		return false;
+ 	}
+ 	return true;
+ }
