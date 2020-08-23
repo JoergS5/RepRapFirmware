@@ -267,7 +267,7 @@ bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], co
 		 getAxis3Coords(angle1, ax2Inv, ax4Inv, ax3Inv, angles234);
 		 angle5 = 0;
 	 }
-	 else if(pMode == 2) { // axis5 parallel to x
+	 else if(pMode == 2) { // axis5 p2Angle degree in respect to x axis
 		ax5Inv[0] = x - cos(p2Angle/180.0*Pi) * arm5length;
 		ax5Inv[1] = y - sin(p2Angle/180.0*Pi) * arm5length;
 		 ax5Inv[2] = z;
