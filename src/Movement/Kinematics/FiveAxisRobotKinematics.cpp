@@ -99,7 +99,6 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 {
 	if (mCode == 669)
 	{
-		//size_t length;		// returns count of parameters
 		float val;			// return value
 		int32_t valInt;
 		bool seen = false;			// return value
@@ -157,12 +156,13 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 
 		if (gb.Seen('P')) {
 			float arr[2];
-			size_t length;
+			size_t length = 2;
 			gb.GetFloatArray(arr, length, false);
 			if(length == 1) {
 				pMode = (int32_t) arr[0];
 				arm4vertical = true;
 				seen = true;
+				p2Angle = 0.0; // set to clarify it's not used
 			}
 			else if(length == 2) {
 				pMode = (int32_t) arr[0];	// todo report error if not 2
