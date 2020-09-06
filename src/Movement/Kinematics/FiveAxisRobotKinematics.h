@@ -86,10 +86,10 @@ private:
 	float p2Angle = 0.0;		// only relevant for P2 mode
 	int32_t rMode = 0;		// R setting
 
-	float arm2length;		// starting at axis2
-	float arm3length;		// starting at axis3
-	float arm4length;		// starting at axis4
-	float arm5length;		// starting at axis5
+	float arm2length = 0.0;		// starting at axis2
+	float arm3length = 0.0;		// starting at axis3
+	float arm4length = 0.0;		// starting at axis4
+	float arm5length = 0.0;		// starting at axis5
 
 	float angle1limits[2] = {-45.0, 45.0};	// limit angle1 of vertical axis1 min and max (including values both)
 	float angle2limits[2] = {0.0, 75.0};	// limit angle2 of axis2 min and max (including values both)
