@@ -1,3 +1,4 @@
+
 /*
  * FiveAxisRobotKinematics.cpp
  *
@@ -98,56 +99,74 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 {
 	if (mCode == 669)
 	{
-		float arr[10];		// return values, maximum for A
-		size_t length;		// returns count of parameters
+		//size_t length;		// returns count of parameters
 		float val;			// return value
 		int32_t valInt;
 		bool seen = false;			// return value
 		bool seenNonGeometry = false;
 
+		// todo support third parameter
 		if (gb.Seen('X')) {
-			gb.GetFloatArray(arr, length, false);
-			if(length >= 2) {
-				axis1coords[0] = arr[0];
-				axis2coords[0] = arr[1];
-			}
-			if(length == 3) {
-				axis6coords[0] = arr[2];
-				useRail = true;
-			}
-			if(length == 2) {
+			float xpara[3];
+			bool dseen = false;
+			if (!gb.TryGetFloatArray('X', 2, xpara, reply, dseen)) {
+				axis1coords[0] = xpara[0];
+				axis2coords[0] = xpara[1];
 				useRail = false;
+				seen = true;
+			}
+			else if (!gb.TryGetFloatArray('X', 3, xpara, reply, dseen)) {
+				axis1coords[0] = xpara[0];
+				axis2coords[0] = xpara[1];
+				axis6coords[0] = xpara[2];
+				useRail = true;
+				seen = true;
 			}
 		}
 
 		if (gb.Seen('Y')) {
-			gb.GetFloatArray(arr, length, false);
-			if(length == 2) {
-				axis1coords[1] = arr[0];
-				axis2coords[1] = arr[1];
+			float xpara[3];
+			bool dseen = false;
+			if (!gb.TryGetFloatArray('Y', 2, xpara, reply, dseen)) {
+				axis1coords[1] = xpara[0];
+				axis2coords[1] = xpara[1];
 				if(axis1coords[1] == axis2coords[1]) {
 					axis2yis0 = true;
 				}
+				useRail = false;
+				seen = true;
+			}
+			else if (!gb.TryGetFloatArray('Y', 3, xpara, reply, dseen)) {
+				axis1coords[1] = xpara[0];
+				axis2coords[1] = xpara[1];
+				axis6coords[0] = xpara[2];
+				if(axis1coords[1] == axis2coords[1]) {
+					axis2yis0 = true;
+				}
+				useRail = true;
+				seen = true;
 			}
 		}
 
 		if (gb.Seen('Z')) {
-			gb.GetFloatArray(arr, length, false);
-			if(length == 1) {
-				axis2coords[2] = arr[0];
-			}
+			gb.TryGetFValue('Z', val, seenNonGeometry);
+			axis2coords[2] = val;
+			seen = true;
 		}
 
 		if (gb.Seen('P')) {
-			gb.GetFloatArray(arr, length, false);
-			if(length == 1) {
-				pMode = (int32_t) arr[0];
+			float xpara[2];
+			bool dseen = false;
+			if (!gb.TryGetFloatArray('P', 1, xpara, reply, dseen)) {
+				pMode = (int32_t) xpara[0];
 				arm4vertical = true;
+				seen = true;
 			}
-			else if(length == 2) {
-				pMode = (int32_t) arr[0];	// todo report error if not 2
-				p2Angle = arr[1];
+			else if (!gb.TryGetFloatArray('P', 2, xpara, reply, dseen)) {
+				pMode = (int32_t) xpara[0];	// todo report error if not 2
+				p2Angle = xpara[1];
 				arm4vertical = true;
+				seen = true;
 			}
 		}
 
@@ -156,52 +175,55 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			if(seen) {
 				rMode = valInt;
 			}
+			seen = true;
 		}
 
 		if (gb.Seen('L')) {		// arm 2 to 5 lengths
-			gb.GetFloatArray(arr, length, false);
-			if(length == 4) {
-				arm2length = arr[0];
-				arm3length = arr[1];
-				arm4length = arr[2];
-				arm5length = arr[3];
-			}
+			float arms[4];
+			gb.TryGetFloatArray('L', 4, arms, reply, seen);
+			arm2length = arms[0];
+			arm3length = arms[1];
+			arm4length = arms[2];
+			arm5length = arms[3];
+			seen = true;
 		}
 
 		if (gb.Seen('A')) {		// angle restrictions
-			gb.GetFloatArray(arr, length, false);
-			if(length == 10) {
-				angle1limits[0] = arr[0];
-				angle1limits[1] = arr[1];
-				angle2limits[0] = arr[2];
-				angle2limits[1] = arr[3];
-				angle3limits[0] = arr[4];
-				angle3limits[1] = arr[5];
-				angle4limits[0] = arr[6];
-				angle4limits[1] = arr[7];
-				angle5limits[0] = arr[8];
-				angle5limits[1] = arr[9];
-			}
+			float limits[10];
+			gb.TryGetFloatArray('A', 10, limits, reply, seen);
+			angle1limits[0] = limits[0];
+			angle1limits[1] = limits[1];
+			angle2limits[0] = limits[2];
+			angle2limits[1] = limits[3];
+			angle3limits[0] = limits[4];
+			angle3limits[1] = limits[5];
+			angle4limits[0] = limits[6];
+			angle4limits[1] = limits[7];
+			angle5limits[0] = limits[8];
+			angle5limits[1] = limits[9];
+			seen = true;
 		}
 
 		if (gb.Seen('S')) {
 			gb.TryGetFValue('S', val, seenNonGeometry);
 			if(seenNonGeometry) {
-				segmentsPerSecond = arr[0];
+				segmentsPerSecond = val;
 			}
 			else {
 				segmentsPerSecond = DefaultSegmentsPerSecond;
 			}
+			seen = true;
 		}
 
 		if (gb.Seen('T')) {
 			gb.TryGetFValue('T', val, seenNonGeometry);
 			if(seenNonGeometry) {
-				minSegmentLength = arr[0];
+				minSegmentLength = val;
 			}
 			else {
 				minSegmentLength = DefaultMinSegmentSize;
 			}
+			seen = true;
 		}
 
 		if (gb.Seen('D')) {
@@ -209,32 +231,31 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			if(seen) {
 				optimizeCode(valInt);
 			}
+			seen = true;
 		}
 
 		if (gb.Seen('B')) {
-			gb.GetFloatArray(arr, length, false);
-			if(length == 3) {
-				arm2bendingFactor = arr[0];
-				arm3bendingFactor = arr[1];
-				arm5bendingFactor = arr[2];
-			}
+			float bending[3];
+			gb.TryGetFloatArray('B', 4, bending, reply, seen);
+			arm2bendingFactor = bending[0];
+			arm3bendingFactor = bending[1];
+			arm5bendingFactor = bending[2];
+			seen = true;
 		}
 
 		if (seen)
 		{
 			Recalc();
 		}
-		else if (!seenNonGeometry && !gb.Seen('K'))
-		{
-			reply.catf("Kinematics FiveAxisRobot");
-			reply.catf(", arm2length %.3f, arm3length %.3f, arm4length %.3f, arm5length %.3f"
-					", axis1 x %.3f, axis1 y %.3f, axis 2 x %.3f, axis 2 y %.3f, axis 2 z %.3f"
-					", P%i",
-					(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length,
-					(double) axis1coords[0], (double) axis1coords[1],
-					(double) axis2coords[0], (double) axis2coords[1], (double) axis2coords[2],
-					(int) pMode);
-		}
+
+		reply.catf("Kinematics FiveAxisRobot");
+		reply.catf(", arm2length %.3f, arm3length %.3f, arm4length %.3f, arm5length %.3f"
+				", axis1 x %.3f, axis1 y %.3f, axis 2 x %.3f, axis 2 y %.3f, axis 2 z %.3f"
+				", P%i, R%i",
+				(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length,
+				(double) axis1coords[0], (double) axis1coords[1],
+				(double) axis2coords[0], (double) axis2coords[1], (double) axis2coords[2],
+				(int) pMode, (int) rMode);
 
 		return seen;
 	}
