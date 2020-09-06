@@ -58,7 +58,7 @@ protected:
 	DECLARE_OBJECT_MODEL
 
 private:
-	static constexpr const char *Home5AxisRobotFileName = "home5axisrobot.g";
+	static constexpr const char *Home5AxisRobotFileName = "homeall.g"; // ex "home5axisrobot.g";
 	static constexpr float DefaultSegmentsPerSecond = 100.0;
 	static constexpr float DefaultMinSegmentSize = 0.2;
 
