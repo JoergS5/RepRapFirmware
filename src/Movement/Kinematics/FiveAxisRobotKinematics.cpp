@@ -69,11 +69,18 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 	{ "axis2coordsX",	OBJECT_MODEL_FUNC(self->axis2coords[0], 3), ObjectModelEntryFlags::none },
 	{ "axis2coordsY",	OBJECT_MODEL_FUNC(self->axis2coords[1], 3), ObjectModelEntryFlags::none },
 	{ "axis2coordsZ",	OBJECT_MODEL_FUNC(self->axis2coords[2], 3), ObjectModelEntryFlags::none },
+
+	// 4. rail parameters
+	{ "railMode", 				OBJECT_MODEL_FUNC(self->railMode), ObjectModelEntryFlags::none },
+	{ "railX", 				OBJECT_MODEL_FUNC(self->railX), ObjectModelEntryFlags::none },
+	{ "railY", 				OBJECT_MODEL_FUNC(self->railY), ObjectModelEntryFlags::none },
+	{ "railZ", 				OBJECT_MODEL_FUNC(self->railZ), ObjectModelEntryFlags::none },
+	{ "useRail", 				OBJECT_MODEL_FUNC(self->useRail), ObjectModelEntryFlags::none },
 };
 
 
 // number of groups, number of entries for each group:
-constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 4, 11, 4, 7, 5 };
+constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 5, 11, 4, 7, 5, 5 };
 
 DEFINE_GET_OBJECT_MODEL_TABLE(FiveAxisRobotKinematics)
 
@@ -104,28 +111,18 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 		bool seen = false;			// return value
 		bool seenNonGeometry = false;
 
-		// todo support third parameter
-		if (gb.Seen('X')) {
-			float xpara[3];
+		if (gb.Seen('X')) {		// X of axis 1 and axis 2
+			float xpara[2];
 			bool dseen = false;
 			if (!gb.TryGetFloatArray('X', 2, xpara, reply, dseen)) {
 				axis1coords[0] = xpara[0];
 				axis2coords[0] = xpara[1];
-				useRail = false;
 				seen = true;
 			}
-//			else if (!gb.TryGetFloatArray('X', 3, xpara, reply, dseen)) {
-//				axis1coords[0] = xpara[0];
-//				axis2coords[0] = xpara[1];
-//				axis6coords[0] = xpara[2];
-//				useRail = true;
-//				seen = true;
-//			}
 		}
 
-		// todo support third parameter
-		if (gb.Seen('Y')) {
-			float xpara[3];
+		if (gb.Seen('Y')) {		// Y of axis 1 and axis 2
+			float xpara[2];
 			bool dseen = false;
 			if (!gb.TryGetFloatArray('Y', 2, xpara, reply, dseen)) {
 				axis1coords[1] = xpara[0];
@@ -133,28 +130,47 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 				if(axis1coords[1] == axis2coords[1]) {
 					axis2yis0 = true;
 				}
-				useRail = false;
 				seen = true;
 			}
-//			else if (!gb.TryGetFloatArray('Y', 3, xpara, reply, dseen)) {
-//				axis1coords[1] = xpara[0];
-//				axis2coords[1] = xpara[1];
-//				axis6coords[0] = xpara[2];
-//				if(axis1coords[1] == axis2coords[1]) {
-//					axis2yis0 = true;
-//				}
-//				useRail = true;
-//				seen = true;
-//			}
 		}
 
-		if (gb.Seen('Z')) {
+		if (gb.Seen('Z')) {		// Z of Axis 2
 			gb.TryGetFValue('Z', val, seenNonGeometry);
 			axis2coords[2] = val;
 			seen = true;
 		}
 
-		if (gb.Seen('P')) {
+		if (gb.Seen('C')) {		// define rail parameters
+			float arr[4];
+			size_t length = 4;
+			gb.GetFloatArray(arr, length, false);
+			if(length == 1) {
+				railMode = (int32_t) arr[0];
+				useRail = false;
+				railX = 0.0;
+				railX = 0.0;
+				railZ = 0.0;
+				seen = true;
+			}
+			else if(length == 4) {
+				railMode = (int32_t) arr[0];
+				if(railMode > 0) {
+					useRail = true;
+					railX = arr[1];
+					railY = arr[2];
+					railZ = arr[3];
+				}
+				else if(railMode == 0) {
+					useRail = false;
+					railX = 0.0;
+					railX = 0.0;
+					railZ = 0.0;
+				}
+				seen = true;
+			}
+		}
+
+		if (gb.Seen('P')) {		// mode for axis 5
 			float arr[2];
 			size_t length = 2;
 			gb.GetFloatArray(arr, length, false);
@@ -172,7 +188,7 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			}
 		}
 
-		if (gb.Seen('R')) {
+		if (gb.Seen('R')) {			// configuration of actuators
 			gb.TryGetIValue('R', valInt, seen);
 			if(seen) {
 				rMode = valInt;
@@ -228,7 +244,7 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			seen = true;
 		}
 
-		if (gb.Seen('D')) {
+		if (gb.Seen('D')) {			// optimization
 			gb.TryGetIValue('D', valInt, seen);
 			if(seen) {
 				optimizeCode(valInt);
@@ -236,7 +252,7 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			seen = true;
 		}
 
-		if (gb.Seen('B')) {
+		if (gb.Seen('B')) {			// arm bendings
 			float bending[3];
 			gb.TryGetFloatArray('B', 4, bending, reply, seen);
 			arm2bendingFactor = bending[0];
@@ -251,13 +267,15 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 		}
 
 		reply.catf("Kinematics FiveAxisRobot");
-		reply.catf(", arm2length %.3f, arm3length %.3f, arm4length %.3f, arm5length %.3f"
-				", axis1 x %.3f, axis1 y %.3f, axis 2 x %.3f, axis 2 y %.3f, axis 2 z %.3f"
-				", P%i, pAngle %.3f, R%i",
-				(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length,
+		reply.catf(", axis1XY: %.3f/%.3f, axis2XYZ: %.3f/%.3f/%.3f",
 				(double) axis1coords[0], (double) axis1coords[1],
-				(double) axis2coords[0], (double) axis2coords[1], (double) axis2coords[2],
+				(double) axis2coords[0], (double) axis2coords[1], (double) axis2coords[2]);
+		reply.catf(", L2/3/4/5: %.3f/%.3f/%.3f/%.3f",
+				(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length);
+		reply.catf(", P%i, pAngle %.3f, R%i",
 				(int) pMode, (double) p2Angle, (int) rMode);
+		reply.catf(", railMode%i, railXYZ: %.3f/%.3f/%.3f",
+				(int) railMode, (double) railX, (double) railY, (double) railZ);
 
 		return seen;
 	}
