@@ -272,10 +272,60 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 				(double) axis2coords[0], (double) axis2coords[1], (double) axis2coords[2]);
 		reply.catf(", L2/3/4/5: %.3f/%.3f/%.3f/%.3f",
 				(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length);
-		reply.catf(", P%i, pAngle %.3f, R%i",
-				(int) pMode, (double) p2Angle, (int) rMode);
-		reply.catf(", railMode%i, railXYZ: %.3f/%.3f/%.3f",
-				(int) railMode, (double) railX, (double) railY, (double) railZ);
+
+		if(pMode == 0) {
+			reply.catf(", P0 (arm 5 fixed 0 degree)");
+		}
+		else if(pMode == 1) {
+			reply.catf(", P1 (arm 5 free rotation)");
+		}
+		else if(pMode == 2) {
+			reply.catf(", P2 (arm 5 fixed angle: %.3f)", (double) p2Angle);
+		}
+		else if(pMode == 3) {
+			reply.catf(", P3 (arm 5 movement direction)");
+		}
+
+		if(useRail) {
+			if(rMode == 0) {
+				reply.catf(", R0 (5+rail actuators XYZUVW)");
+			}
+			else if(rMode == 1) {
+				reply.catf(", R1 (4+rail actuators XYZUV)");
+			}
+			else if(rMode == 2) {
+				reply.catf(", R2 (3+rail actuators XYZU)");
+			}
+		}
+		else {
+			if(rMode == 0) {
+				reply.catf(", R0 (5 actuators XYZUV)");
+			}
+			else if(rMode == 1) {
+				reply.catf(", R1 (4 actuators XYZU)");
+			}
+			else if(rMode == 2) {
+				reply.catf(", R2 (3 actuators XYZ)");
+			}
+		}
+
+		if(useRail) {
+			if(railMode == 1) {
+				reply.catf(", C%i (rail parallel to X, XYZ: %.3f/%.3f/%.3f)",
+						(int) railMode, (double) railX, (double) railY, (double) railZ);
+			}
+			else if(railMode == 2) {
+				reply.catf(", C%i (rail parallel to Y, XYZ: %.3f/%.3f/%.3f)",
+						(int) railMode, (double) railX, (double) railY, (double) railZ);
+			}
+			else if(railMode == 3) {
+				reply.catf(", C%i (rail parallel to Z, XYZ: %.3f/%.3f/%.3f)",
+						(int) railMode, (double) railX, (double) railY, (double) railZ);
+			}
+		}
+		else {
+			reply.catf(", C0 (no rail)");
+		}
 
 		return seen;
 	}
