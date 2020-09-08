@@ -78,10 +78,8 @@ private:
 	// Primary parameters
 	float axis1coords[2];		// XY
 	float axis2coords[3];		// XYZ
-	float axis6coords[1];		// Y rail 6th axis
 	bool axis2yis0 = false;		// if true, arm 2 goes through axis 1
 	bool arm4vertical = true;	// default behaviour
-	bool useRail = false;				// if rail is used
 	int32_t pMode = 0;		// P setting
 	float p2Angle = 0.0;		// only relevant for P2 mode
 	int32_t rMode = 0;		// R setting
@@ -100,6 +98,13 @@ private:
 	float arm2bendingFactor = 0.0;	// B parameter a2 value
 	float arm3bendingFactor = 0.0;	// B parameter a3 value
 	float arm5bendingFactor = 0.0;	// B parameter a5 value
+
+	// rail parameters
+	bool useRail = false;				// if rail is used
+	int32_t railMode = 0;
+	float railX = 0.0;
+	float railY = 0.0;
+	float railZ = 0.0;
 
 };
 
