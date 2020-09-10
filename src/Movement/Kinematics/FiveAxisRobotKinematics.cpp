@@ -267,10 +267,10 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 		}
 
 		reply.catf("Kinematics FiveAxisRobot");
-		reply.catf(", axis1XY: %.3f/%.3f, axis2XYZ: %.3f/%.3f/%.3f",
+		reply.catf(", axis1XY: %.1f/%.1f, axis2XYZ: %.1f/%.1f/%.1f",
 				(double) axis1coords[0], (double) axis1coords[1],
 				(double) axis2coords[0], (double) axis2coords[1], (double) axis2coords[2]);
-		reply.catf(", L2/3/4/5: %.3f/%.3f/%.3f/%.3f",
+		reply.catf(", L2/3/4/5: %.1f/%.1f/%.1f/%.1f",
 				(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length);
 
 		if(pMode == 0) {
@@ -280,7 +280,7 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			reply.catf(", P1 (arm 5 free rotation)");
 		}
 		else if(pMode == 2) {
-			reply.catf(", P2 (arm 5 fixed angle: %.3f)", (double) p2Angle);
+			reply.catf(", P2 (arm 5 fixed angle: %.1f)", (double) p2Angle);
 		}
 		else if(pMode == 3) {
 			reply.catf(", P3 (arm 5 movement direction)");
@@ -311,21 +311,31 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 
 		if(useRail) {
 			if(railMode == 1) {
-				reply.catf(", C%i (rail parallel to X, XYZ: %.3f/%.3f/%.3f)",
+				reply.catf(", C%i (rail parallel to X, XYZ: %.1f/%.1f/%.1f)",
 						(int) railMode, (double) railX, (double) railY, (double) railZ);
 			}
 			else if(railMode == 2) {
-				reply.catf(", C%i (rail parallel to Y, XYZ: %.3f/%.3f/%.3f)",
+				reply.catf(", C%i (rail parallel to Y, XYZ: %.1f/%.1f/%.1f)",
 						(int) railMode, (double) railX, (double) railY, (double) railZ);
 			}
 			else if(railMode == 3) {
-				reply.catf(", C%i (rail parallel to Z, XYZ: %.3f/%.3f/%.3f)",
+				reply.catf(", C%i (rail parallel to Z, XYZ: %.1f/%.1f/%.1f)",
 						(int) railMode, (double) railX, (double) railY, (double) railZ);
 			}
 		}
 		else {
 			reply.catf(", C0 (no rail)");
 		}
+
+		reply.catf(", A%.1f/%.1f/%.1f/%.1f/%.1f/%.1f",
+				(double) angle1limits[0], (double) angle1limits[1],
+				(double) angle2limits[0], (double) angle2limits[1],
+				(double) angle3limits[0], (double) angle3limits[1]
+				);
+		reply.catf("/%.1f/%.1f/%.1f/%.1f",
+				(double) angle4limits[0], (double) angle4limits[1],
+				(double) angle5limits[0], (double) angle5limits[1]
+				);
 
 		return seen;
 	}
