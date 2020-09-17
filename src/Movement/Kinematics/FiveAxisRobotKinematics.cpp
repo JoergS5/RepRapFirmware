@@ -57,8 +57,10 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 	// 2. kinematics members special
 	{ "arm2bendingFactor",	OBJECT_MODEL_FUNC(self->arm2bendingFactor, 3), ObjectModelEntryFlags::none },
 	{ "arm3bendingFactor",	OBJECT_MODEL_FUNC(self->arm3bendingFactor, 3), ObjectModelEntryFlags::none },
+	{ "arm4bendingFactor",	OBJECT_MODEL_FUNC(self->arm4bendingFactor, 3), ObjectModelEntryFlags::none },
 	{ "arm4vertical",	OBJECT_MODEL_FUNC(self->arm4vertical, 3), ObjectModelEntryFlags::none },
 	{ "arm5bendingFactor",	OBJECT_MODEL_FUNC(self->arm5bendingFactor, 3), ObjectModelEntryFlags::none },
+	{ "armOrientation", 				OBJECT_MODEL_FUNC(self->armOrientation), ObjectModelEntryFlags::none },
 	{ "p2Angle", 				OBJECT_MODEL_FUNC(self->p2Angle), ObjectModelEntryFlags::none },
 	{ "pMode", 				OBJECT_MODEL_FUNC(self->pMode), ObjectModelEntryFlags::none },
 	{ "rMode", 				OBJECT_MODEL_FUNC(self->rMode), ObjectModelEntryFlags::none },
@@ -80,7 +82,7 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 
 
 // number of groups, number of entries for each group:
-constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 5, 11, 4, 7, 5, 5 };
+constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 5, 11, 4, 9, 5, 5 };
 
 DEFINE_GET_OBJECT_MODEL_TABLE(FiveAxisRobotKinematics)
 
@@ -252,12 +254,14 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			seen = true;
 		}
 
-		if (gb.Seen('B')) {			// arm bendings
-			float bending[3];
-			gb.TryGetFloatArray('B', 4, bending, reply, seen);
-			arm2bendingFactor = bending[0];
-			arm3bendingFactor = bending[1];
-			arm5bendingFactor = bending[2];
+		if (gb.Seen('B')) {			// arm orientation and bendings
+			float bending[5];
+			gb.TryGetFloatArray('B', 5, bending, reply, seen);
+			armOrientation = (int32_t) bending[0];
+			arm2bendingFactor = bending[1];
+			arm3bendingFactor = bending[2];
+			arm4bendingFactor = bending[3];
+			arm5bendingFactor = bending[4];
 			seen = true;
 		}
 
@@ -603,6 +607,12 @@ AxesBitmap FiveAxisRobotKinematics::GetLinearAxes() const noexcept {
 	AxesBitmap bm = AxesBitmap::MakeFromBits(Z_AXIS);
 	bm.Clear();
 	return bm;
+}
+
+void FiveAxisRobotKinematics::setPlannnedPath(float plpath[]) noexcept {
+	for(int i=0; i < 6; i++) {
+		plannedPath[i] = plpath[i];
+	}
 }
 
 ////////////////////////// private functions //////////////////////////////
