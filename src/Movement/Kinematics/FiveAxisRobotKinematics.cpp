@@ -119,9 +119,17 @@ bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], co
  		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
  		angles[4] = 0;
  	 }
- 	 else if(pMode == 2) { // axis5 p2Angle degree in respect to x axis
- 		ax5Inv[0] = x - cos(p2Angle/180.0*Pi) * arm5length;
- 		ax5Inv[1] = y - sin(p2Angle/180.0*Pi) * arm5length;
+ 	 else if(pMode == 2 || pMode == 3) { // axis5 specific angle
+ 		 float axis5Angle;
+ 		 if(pMode == 2) {
+ 			axis5Angle = p2Angle;
+ 		 }
+ 		 else {	// 3
+ 			 axis5Angle = currentPlannedPathAngleXY;
+ 		 }
+
+ 		ax5Inv[0] = x - cos(axis5Angle/180.0*Pi) * arm5length;
+ 		ax5Inv[1] = y - sin(axis5Angle/180.0*Pi) * arm5length;
  		ax5Inv[2] = z;
 
  		angles[0] = getAngle1(ax5Inv[0], ax5Inv[1], ax5Inv[2]);
@@ -129,7 +137,7 @@ bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], co
  		 getAxis2Coords(angles[0], ax2Inv);
  		 getAxis4Coords(ax5Inv, ax4Inv, angles[0]);
  		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
- 		angles[4] = - angles[0] + p2Angle;
+ 		angles[4] = - angles[0] + axis5Angle;
  	 }
  	  else {
  		  // todo report error
