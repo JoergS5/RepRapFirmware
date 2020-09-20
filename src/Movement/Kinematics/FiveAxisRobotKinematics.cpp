@@ -71,6 +71,8 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 	{ "axis2coordsX",	OBJECT_MODEL_FUNC(self->axis2coords[0], 3), ObjectModelEntryFlags::none },
 	{ "axis2coordsY",	OBJECT_MODEL_FUNC(self->axis2coords[1], 3), ObjectModelEntryFlags::none },
 	{ "axis2coordsZ",	OBJECT_MODEL_FUNC(self->axis2coords[2], 3), ObjectModelEntryFlags::none },
+	{ "axis5offsetX",	OBJECT_MODEL_FUNC(self->axis5offset[0], 3), ObjectModelEntryFlags::none },
+	{ "axis5offsetY",	OBJECT_MODEL_FUNC(self->axis5offset[1], 3), ObjectModelEntryFlags::none },
 
 	// 4. rail parameters
 	{ "railMode", 				OBJECT_MODEL_FUNC(self->railMode), ObjectModelEntryFlags::none },
@@ -82,7 +84,7 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 
 
 // number of groups, number of entries for each group:
-constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 5, 11, 4, 9, 5, 5 };
+constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 5, 11, 4, 9, 7, 5 };
 
 DEFINE_GET_OBJECT_MODEL_TABLE(FiveAxisRobotKinematics)
 
@@ -95,6 +97,145 @@ FiveAxisRobotKinematics::FiveAxisRobotKinematics() noexcept
 }
 
 ///////////////////////////// public functions /////////////////////////
+
+bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], const float stepsPerMm[], size_t numVisibleAxes, size_t numTotalAxes, int32_t motorPos[], bool isCoordinated) const noexcept {
+
+ 	 float x = machinePos[0];
+ 	 float y = machinePos[1];
+ 	 float z = machinePos[2];
+
+ 	 float angles[5];
+
+ 	 float ax2Inv[3];
+ 	 float ax3Inv[3];
+ 	 float ax4Inv[3];
+ 	 float ax5Inv[3];
+
+ 	 if(pMode == 0) {
+ 		 angles[0] = getAngle1(x, y, z);
+ 		 getAxis2Coords(angles[0], ax2Inv);
+ 		 getAxis5Coords(x, y, z, angles[0], ax5Inv);
+ 		 getAxis4Coords(ax5Inv, ax4Inv, angles[0]);
+ 		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
+ 		angles[4] = 0;
+ 	 }
+ 	 else if(pMode == 2) { // axis5 p2Angle degree in respect to x axis
+ 		ax5Inv[0] = x - cos(p2Angle/180.0*Pi) * arm5length;
+ 		ax5Inv[1] = y - sin(p2Angle/180.0*Pi) * arm5length;
+ 		ax5Inv[2] = z;
+
+ 		angles[0] = getAngle1(ax5Inv[0], ax5Inv[1], ax5Inv[2]);
+
+ 		 getAxis2Coords(angles[0], ax2Inv);
+ 		 getAxis4Coords(ax5Inv, ax4Inv, angles[0]);
+ 		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
+ 		angles[4] = - angles[0] + p2Angle;
+ 	 }
+ 	  else {
+ 		  // todo report error
+ 		  return false;
+ 	 }
+
+ 	 if(!constraintsOk(angles)) {
+ 		 return false;
+ 	 }
+
+ 	 if(rMode == 0) {			// all 5 axis have actuators
+ 	 	 motorPos[0] = ROUND_2_INT(angles[0] * stepsPerMm[0]);
+ 	 	 motorPos[1] = ROUND_2_INT(angles[1] * stepsPerMm[1]);
+ 	 	 motorPos[2] = ROUND_2_INT(angles[2] * stepsPerMm[2]);
+ 	 	 motorPos[3] = ROUND_2_INT(angles[3] * stepsPerMm[3]);
+ 	 	 motorPos[4] = ROUND_2_INT(angles[4] * stepsPerMm[4]);
+ 	 }
+ 	 else if(rMode == 1) {		// no 4th actuator
+ 	 	 motorPos[0] = ROUND_2_INT(angles[0] * stepsPerMm[0]);
+ 	 	 motorPos[1] = ROUND_2_INT(angles[1] * stepsPerMm[1]);
+ 	 	 motorPos[2] = ROUND_2_INT(angles[2] * stepsPerMm[2]);
+ 	 	 motorPos[3] = ROUND_2_INT(angles[4] * stepsPerMm[4]);
+ 	 }
+ 	 else if(rMode == 2) {		// no 4th and 5th actuator
+ 	 	 motorPos[0] = ROUND_2_INT(angles[0] * stepsPerMm[0]);
+ 	 	 motorPos[1] = ROUND_2_INT(angles[1] * stepsPerMm[1]);
+ 	 	 motorPos[2] = ROUND_2_INT(angles[2] * stepsPerMm[2]);
+ 	 }
+
+ 	 return true;
+ }
+
+
+ void FiveAxisRobotKinematics::MotorStepsToCartesian(const int32_t motorPos[], const float stepsPerMm[], size_t numVisibleAxes, size_t numTotalAxes, float machinePos[]) const noexcept {
+ 	 float angle1 = (float) motorPos[0] / stepsPerMm[0];
+ 	 float angle2 = (float) motorPos[1] / stepsPerMm[1];
+ 	 float angle3 = (float) motorPos[2] / stepsPerMm[2];
+ 	 float angle4 = -90.0 - angle2 - angle3;
+ 	 float angle5 = 0.0;
+
+	 if(rMode == 0) {
+	 	 angle4 = (float) motorPos[3] / stepsPerMm[3];
+	 	 angle5 = (float) motorPos[4] / stepsPerMm[4];
+	 }
+	 else if(rMode == 1) {		// angle4 is automatic
+	 	 //angle4 = -90.0 - angle2 - angle3;
+	 	 angle5 = (float) motorPos[3] / stepsPerMm[3];
+	 }
+	 else if(rMode == 2) {		// angle4 is automatic, angle5 is always 0
+	 	 //angle4 = -90.0 - angle2 - angle3;
+	 	 //angle5 = 0.0;
+	 }
+
+ 	 float x = axis2coords[0];
+ 	 float y = axis2coords[1];
+ 	 float z = axis2coords[2];
+
+ 	 // first calculate nozzle endpoint with axis1 unrotated, then rotate by axis1
+
+ 	 // position axis 3
+ 	 float l2angledX = cos(angle2/180.0*Pi) * arm2length;
+ 	 x += l2angledX;
+ 	 float l2angledZ = sin(angle2/180.0*Pi) * arm2length;
+ 	 z += l2angledZ;
+
+ 	 // position axis 4
+ 	 float l3angled = cos((angle2+angle3)/180.0*Pi) * arm3length;
+ 	 x += l3angled;
+ 	 float l3angledZ = sin((angle2+angle3)/180.0*Pi) * arm3length;
+ 	 z += l3angledZ;
+
+ 	 // position axis 5 (endpoint arm 4)
+ 	 float l4angled = cos((angle2+angle3+angle4)/180.0*Pi) * arm4length;
+ 	 x += l4angled;
+ 	 float l4angledZ = sin((angle2+angle3+angle4)/180.0*Pi) * arm4length;
+ 	 z += l4angledZ;
+
+ 	 // axis 5 position
+ 	 x += axis5offset[0];
+ 	 y += axis5offset[1];
+
+ 	 // position nozzle
+ 	 float l5angled = cos(angle5/180.0*Pi) * arm5length;
+ 	 x += l5angled;
+ 	 float l5angledY = sin(angle5/180.0*Pi) * arm5length;
+ 	 y += l5angledY;
+
+ 	 // rotate by axis 1
+ 	 // set rotation orig:
+ 	 float origX = x - axis1coords[0];
+ 	 float origY = y - axis1coords[1];
+
+ 	 float sinangle = sin(angle1/180.0*Pi);
+ 	 float cosangle = cos(angle1/180.0*Pi);
+ 	 x = origX * cosangle - origY * sinangle;
+ 	 y = origX * sinangle + origY * cosangle;
+
+ 	 // correct back rotation orig
+ 	 x += axis1coords[0];
+ 	 y += axis1coords[1];
+
+ 	 machinePos[0] = x;
+ 	 machinePos[1] = y;
+ 	 machinePos[2] = z;
+ }
+
 
 // Return the name of the current kinematics
 const char *FiveAxisRobotKinematics::GetName(bool forStatusReport) const noexcept
@@ -113,26 +254,31 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 		bool seen = false;			// return value
 		bool seenNonGeometry = false;
 
-		if (gb.Seen('X')) {		// X of axis 1 and axis 2
-			float xpara[2];
-			bool dseen = false;
-			if (!gb.TryGetFloatArray('X', 2, xpara, reply, dseen)) {
-				axis1coords[0] = xpara[0];
-				axis2coords[0] = xpara[1];
+		if (gb.Seen('X')) {		// X of axis 1 and axis 2, optional axis 5 offset
+			float arr[3];
+			size_t length = 3;
+			gb.GetFloatArray(arr, length, false);
+			if(length >= 2) {
+				axis1coords[0] = arr[0];
+				axis2coords[0] = arr[1];
 				seen = true;
+				if(length == 3) {
+					axis5offset[0] = arr[2];
+				}
 			}
 		}
 
-		if (gb.Seen('Y')) {		// Y of axis 1 and axis 2
-			float xpara[2];
-			bool dseen = false;
-			if (!gb.TryGetFloatArray('Y', 2, xpara, reply, dseen)) {
-				axis1coords[1] = xpara[0];
-				axis2coords[1] = xpara[1];
-				if(axis1coords[1] == axis2coords[1]) {
-					axis2yis0 = true;
-				}
+		if (gb.Seen('Y')) {		// Y of axis 1 and axis 2, optional axis 5 offset
+			float arr[3];
+			size_t length = 3;
+			gb.GetFloatArray(arr, length, false);
+			if(length >= 2) {
+				axis1coords[1] = arr[0];
+				axis2coords[1] = arr[1];
 				seen = true;
+				if(length == 3) {
+					axis5offset[1] = arr[2];
+				}
 			}
 		}
 
@@ -349,145 +495,7 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 	}
 }
 
-bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], const float stepsPerMm[], size_t numVisibleAxes, size_t numTotalAxes, int32_t motorPos[], bool isCoordinated) const noexcept {
 
- 	 float x = machinePos[0];
- 	 float y = machinePos[1];
- 	 float z = machinePos[2];
-
- 	 float angle1;
- 	 float angles234[3];
- 	 float angle5;
-
- 	 float ax2Inv[3];
- 	 float ax3Inv[3];
- 	 float ax4Inv[3];
- 	 float ax5Inv[3];
-
- 	 if(pMode == 0) {
- 		 angle1 = getAngle1(x, y, z);
- 		 getAxis2Coords(angle1, ax2Inv);
- 		 getAxis5Coords(x, y, z, angle1, ax5Inv);
- 		 getAxis4Coords(ax5Inv, ax4Inv);
- 		 getAxis3Coords(angle1, ax2Inv, ax4Inv, ax3Inv, angles234);
- 		 angle5 = 0;
- 	 }
- 	 else if(pMode == 2) { // axis5 p2Angle degree in respect to x axis
- 		ax5Inv[0] = x - cos(p2Angle/180.0*Pi) * arm5length;
- 		ax5Inv[1] = y - sin(p2Angle/180.0*Pi) * arm5length;
- 		 ax5Inv[2] = z;
- 		 angle1 = getAngle1(ax5Inv[0], ax5Inv[1], ax5Inv[2]);
- 		 getAxis2Coords(angle1, ax2Inv);
- 		 getAxis4Coords(ax5Inv, ax4Inv);
- 		 getAxis3Coords(angle1, ax2Inv, ax4Inv, ax3Inv, angles234);
- 		 angle5 = - angle1 + p2Angle;
- 	 }
- 	  else {
- 		  // todo report error
- 		  return false;
- 	 }
-
- 	 float angles[5];
- 	 angles[0] = angle1;
- 	 angles[1] = angles234[0];
- 	 angles[2] = angles234[1];;
- 	 angles[3] = angles234[2];;
- 	 angles[4] = angle5;
- 	 if(!constraintsOk(angles)) {
- 		 return false;
- 	 }
-
- 	 if(rMode == 0) {			// all 5 axis have actuators
- 	 	 motorPos[0] = ROUND_2_INT(angle1 * stepsPerMm[0]);
- 	 	 motorPos[1] = ROUND_2_INT(angles234[0] * stepsPerMm[1]);
- 	 	 motorPos[2] = ROUND_2_INT(angles234[1] * stepsPerMm[2]);
- 	 	 motorPos[3] = ROUND_2_INT(angles234[2] * stepsPerMm[3]);
- 	 	 motorPos[4] = ROUND_2_INT(angle5 * stepsPerMm[4]);
- 	 }
- 	 else if(rMode == 1) {		// no 4th actuator
- 	 	 motorPos[0] = ROUND_2_INT(angle1 * stepsPerMm[0]);
- 	 	 motorPos[1] = ROUND_2_INT(angles234[0] * stepsPerMm[1]);
- 	 	 motorPos[2] = ROUND_2_INT(angles234[1] * stepsPerMm[2]);
- 	 	 motorPos[3] = ROUND_2_INT(angle5 * stepsPerMm[4]);
- 	 }
- 	 else if(rMode == 2) {		// no 4th and 5th actuator
- 	 	 motorPos[0] = ROUND_2_INT(angle1 * stepsPerMm[0]);
- 	 	 motorPos[1] = ROUND_2_INT(angles234[0] * stepsPerMm[1]);
- 	 	 motorPos[2] = ROUND_2_INT(angles234[1] * stepsPerMm[2]);
- 	 }
-
- 	 return true;
- }
-
-
- void FiveAxisRobotKinematics::MotorStepsToCartesian(const int32_t motorPos[], const float stepsPerMm[], size_t numVisibleAxes, size_t numTotalAxes, float machinePos[]) const noexcept {
- 	 float angle1 = (float) motorPos[0] / stepsPerMm[0];
- 	 float angle2 = (float) motorPos[1] / stepsPerMm[1];
- 	 float angle3 = (float) motorPos[2] / stepsPerMm[2];
- 	 float angle4 = -90.0 - angle2 - angle3;
- 	 float angle5 = 0.0;
-
-	 if(rMode == 0) {
-	 	 angle4 = (float) motorPos[3] / stepsPerMm[3];
-	 	 angle5 = (float) motorPos[4] / stepsPerMm[4];
-	 }
-	 else if(rMode == 1) {		// angle4 is automatic
-	 	 //angle4 = -90.0 - angle2 - angle3;
-	 	 angle5 = (float) motorPos[3] / stepsPerMm[3];
-	 }
-	 else if(rMode == 2) {		// angle4 is automatic, angle5 is always 0
-	 	 //angle4 = -90.0 - angle2 - angle3;
-	 	 //angle5 = 0.0;
-	 }
-
- 	 float x = axis2coords[0];
- 	 float y = axis2coords[1];
- 	 float z = axis2coords[2];
-
- 	 // first calculate nozzle endpoint with axis1 unrotated, then rotate by axis1
-
- 	 // position axis 3
- 	 float l2angledX = cos(angle2/180.0*Pi) * arm2length;
- 	 x += l2angledX;
- 	 float l2angledZ = sin(angle2/180.0*Pi) * arm2length;
- 	 z += l2angledZ;
-
- 	 // position axis 4
- 	 float l3angled = cos((angle2+angle3)/180.0*Pi) * arm3length;
- 	 x += l3angled;
- 	 float l3angledZ = sin((angle2+angle3)/180.0*Pi) * arm3length;
- 	 z += l3angledZ;
-
- 	 // position axis 5
- 	 float l4angled = cos((angle2+angle3+angle4)/180.0*Pi) * arm4length;
- 	 x += l4angled;
- 	 float l4angledZ = sin((angle2+angle3+angle4)/180.0*Pi) * arm4length;
- 	 z += l4angledZ;
-
- 	 // position nozzle
- 	 float l5angled = cos(angle5/180.0*Pi) * arm5length;
- 	 x += l5angled;
- 	 float l5angledY = sin(angle5/180.0*Pi) * arm5length;
- 	 y += l5angledY;
-
- 	 // rotate by axis 1
- 	 // set rotation orig:
- 	 float origX = x - axis1coords[0];
- 	 float origY = y - axis1coords[1];
-
- 	 float sinangle = sin(angle1/180.0*Pi);
- 	 float cosangle = cos(angle1/180.0*Pi);
- 	 x = origX * cosangle - origY * sinangle;
- 	 y = origX * sinangle + origY * cosangle;
-
- 	 // correct back rotation orig
- 	 x += axis1coords[0];
- 	 y += axis1coords[1];
-
- 	 machinePos[0] = x;
- 	 machinePos[1] = y;
- 	 machinePos[2] = z;
- }
 
 bool FiveAxisRobotKinematics::DoAutoCalibration(size_t numFactors, const RandomProbePointSet& probePoints, const StringRef& reply) noexcept {
 	return false;
@@ -710,49 +718,41 @@ void FiveAxisRobotKinematics::getIntersec(float result[], float firstRadius, flo
 	result[3] = y2;
 }
 
-// get angle1 for axis1
-// called by inverse kinematics
-// xyz is the nozzle endpoint (P4) or the axis5 coordinate (P2, P3)
-float FiveAxisRobotKinematics::getAngle1(float x, float y, float z) const {
-	 float angle1;	// angle of axis 1 CCW
+bool FiveAxisRobotKinematics::constraintsOk(const float angles[]) const noexcept {
+ 	if(angles[0] < angle1limits[0] - FLOATERROR || angles[0] > angle1limits[1] + FLOATERROR) {
+ 		return false;
+ 	}
+ 	if(angles[1] < angle2limits[0] - FLOATERROR || angles[1] > angle2limits[1] + FLOATERROR) {
+ 		return false;
+ 	}
+ 	if(angles[2] < angle3limits[0] - FLOATERROR || angles[2] > angle3limits[1]+ FLOATERROR) {
+		return false;
+ 	}
+ 	if(angles[3] < angle4limits[0] - FLOATERROR || angles[3] > angle4limits[1] + FLOATERROR) {
+		return false;
+ 	}
+ 	if(angles[4] < angle5limits[0] - FLOATERROR || angles[4] > angle5limits[1] + FLOATERROR) {
+		return false;
+ 	}
+ 	return true;
+ }
 
-	 if(axis2yis0) {		// arm 2 through axis 1
-		 float xdiff = x - axis1coords[0];
-		 float ydiff = y - axis1coords[1];
-		 angle1 = atan(ydiff/xdiff) * 180.0 / Pi;
-	 }
-	 else {
-		 if(y == axis2coords[1]) {
-			 angle1 = 0.0;
-		 }
-		 else {
-			 float tangent[2];
-			 float xmid = (x + axis1coords[0]) / 2.0;
-			 float ymid = (y + axis1coords[1]) / 2.0;
-			 float radiusMid = sqrt(fsquare(x-axis1coords[0]) + fsquare(y-axis1coords[1])) / 2.0;
-			 if(axis1coords[1] < axis2coords[1]) {
-				 getIntersectionUpper(axis1coords[0], axis1coords[1], (axis2coords[1]-axis1coords[1]), xmid, ymid,
-						 radiusMid, tangent, true);
-			 }
-			 else {
-				 getIntersectionUpper(axis1coords[0], axis1coords[1], (-axis2coords[1]+axis1coords[1]), xmid, ymid,
-						 radiusMid, tangent, false);
-			 }
-			 float xdiff = x - tangent[0];
-			 float ydiff = y - tangent[1];
-			 angle1 = atan(ydiff/xdiff) * 180.0 / Pi;
-		 }
-	 }
-	 return angle1;
-}
+// more exact method name would be: getStartpointArm4
+void FiveAxisRobotKinematics::getAxis4Coords(const float axis5c[], float axis4c[], float angle1) const {
+	// todo axis5offset correction is only correct if arm 4 is vertical
 
-void FiveAxisRobotKinematics::getAxis4Coords(const float axis5c[], float axis4c[]) const {
-	 axis4c[0] = axis5c[0];
-	 axis4c[1] = axis5c[1];
+	 // rotate axis5offset:
+ 	 float sinangle = sin(angle1/180.0*Pi);
+ 	 float cosangle = cos(angle1/180.0*Pi);
+ 	 float ax5x = axis5offset[0] * cosangle - axis5offset[1] * sinangle;
+ 	 float ax5y = axis5offset[0] * sinangle + axis5offset[1] * cosangle;
+
+	 axis4c[0] = axis5c[0] - ax5x;
+	 axis4c[1] = axis5c[1] - ax5y;
+
 	 axis4c[2] = axis5c[2] + arm4length;	// axis4 is always vertical above axis5
 }
 
-// is only called with pMode == 0
 void FiveAxisRobotKinematics::getAxis5Coords(float x, float y, float z, float angle1, float axis5c[]) const {
 	 float sinangle = sin(angle1/180.0*Pi);
 	 float cosangle = cos(angle1/180.0*Pi);
@@ -779,7 +779,7 @@ void FiveAxisRobotKinematics::getAxis2Coords(float angle1, float axis2c[]) const
 }
 
 void FiveAxisRobotKinematics::getAxis3Coords(float angle1, const float axis2c[], const float axis4c[], float axis3c[],
-				float angles234[]) const {
+				float angles[]) const {
 	 // first get distance between axis 2 and axis4, three dimensional
 	 float dist2to4 = sqrt(fsquare(axis2c[0]-axis4c[0]) + fsquare(axis2c[1]-axis4c[1])
 			 + fsquare(axis2c[2]-axis4c[2]));
@@ -797,7 +797,7 @@ void FiveAxisRobotKinematics::getAxis3Coords(float angle1, const float axis2c[],
 
 	 // angle2
 	 float angle2 =  angle2uncorrected + zangle2to4;
-	 angles234[0] = angle2;
+	 angles[1] = angle2;
 
 	 // vector addition, get axis3
 	 float x3 = cos(angle2/180.0*Pi) * cos(angle1/180.0*Pi) * arm2length + axis2c[0];
@@ -811,28 +811,47 @@ void FiveAxisRobotKinematics::getAxis3Coords(float angle1, const float axis2c[],
 	 // angle from axis3 to axis4 (measured beginning from axis4)
 	 float zdiff3to4 = axis4c[2] - axis3c[2];
 	 float angle3 = asin(zdiff3to4/arm3length) * 180.0 / Pi - angle2;
-	 angles234[1] = angle3;
+	 angles[2] = angle3;
 
 	 // get angle 4
 	 float angle4 = -90 - angle2 - angle3;
-	 angles234[2] = angle4;
+	 angles[3] = angle4;
 }
 
-bool FiveAxisRobotKinematics::constraintsOk(const float angles[]) const noexcept {
- 	if(angles[0] < angle1limits[0] - FLOATERROR || angles[0] > angle1limits[1] + FLOATERROR) {
- 		return false;
- 	}
- 	if(angles[1] < angle2limits[0] - FLOATERROR || angles[1] > angle2limits[1] + FLOATERROR) {
- 		return false;
- 	}
- 	if(angles[2] < angle3limits[0] - FLOATERROR || angles[2] > angle3limits[1]+ FLOATERROR) {
-		return false;
- 	}
- 	if(angles[3] < angle4limits[0] - FLOATERROR || angles[3] > angle4limits[1] + FLOATERROR) {
-		return false;
- 	}
- 	if(angles[4] < angle5limits[0] - FLOATERROR || angles[4] > angle5limits[1] + FLOATERROR) {
-		return false;
- 	}
- 	return true;
- }
+// find tangent https://silo.tips/download/geometrie-dossier-kreis-2 section Grundkonstruktion 2
+// xyz are the endpoints (P4) or the axis5 coordinates (P2, P3)
+float FiveAxisRobotKinematics::getAngle1(float x, float y, float z) const {
+	 float angle1;	// angle of axis 1 CCW
+
+	 if(axis2yis0) {		// arm 2 through axis 1
+		 float xdiff = x - axis1coords[0];
+		 float ydiff = y - axis1coords[1];
+		 angle1 = atan(ydiff/xdiff) * 180.0 / Pi;
+	 }
+	 else {
+		 if(y == axis2coords[1]) {
+			 angle1 = 0.0;
+		 }
+		 else {
+			 float ax2corr[2];
+			 ax2corr[0] = axis2coords[0] + axis5offset[0];
+			 ax2corr[1] = axis2coords[1] + axis5offset[1];
+			 float tangent[2];
+			 float xmid = (x + axis1coords[0]) / 2.0;
+			 float ymid = (y + axis1coords[1]) / 2.0;
+			 float radiusMid = sqrt(fsquare(x-axis1coords[0]) + fsquare(y-axis1coords[1])) / 2.0;
+			 if(axis1coords[1] < ax2corr[1]) {
+				 getIntersectionUpper(axis1coords[0], axis1coords[1], (ax2corr[1]-axis1coords[1]), xmid, ymid,
+						 radiusMid, tangent, true);
+			 }
+			 else {
+				 getIntersectionUpper(axis1coords[0], axis1coords[1], (-ax2corr[1]+axis1coords[1]), xmid, ymid,
+						 radiusMid, tangent, false);
+			 }
+			 float xdiff = x - tangent[0];
+			 float ydiff = y - tangent[1];
+			 angle1 = atan(ydiff/xdiff) * 180.0 / Pi;
+		 }
+	 }
+	 return angle1;
+}
