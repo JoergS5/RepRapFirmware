@@ -423,6 +423,9 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 		reply.catf(", L2/3/4/5: %.1f/%.1f/%.1f/%.1f",
 				(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length);
 
+		reply.catf(", XoYo: %.1f/%.1f",
+				(double) axis5offset[0], (double) axis5offset[1]);
+
 		if(pMode == 0) {
 			reply.catf(", P0 (arm 5 fixed 0 degree)");
 		}
