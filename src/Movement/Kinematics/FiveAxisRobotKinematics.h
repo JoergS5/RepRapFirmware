@@ -74,7 +74,7 @@ private:
 	void getAxis2Coords(float angle1, float axis2coords[]) const;
 	void getAxis3Coords(float angle1, const float axis2coords[], const float axis4coords[], float axis3coords[],
 			float angles234[]) const;
-	void getAxis4Coords(const float axis5coords[], float axis4coords[]) const;
+	void getAxis4Coords(const float axis5coords[], float axis4coords[], float angle1) const;
 	void getAxis5Coords(float x, float y, float z, float angle1, float axis5coords[]) const;
 
 	// Primary parameters
@@ -82,6 +82,7 @@ private:
 	float axis2coords[3];		// XYZ
 	bool axis2yis0 = false;		// if true, arm 2 goes through axis 1
 	bool arm4vertical = true;	// default behaviour
+	float axis5offset[2] = {0.0, 0.0};		// Xo, Yo parameters
 	int32_t pMode = 0;		// P setting
 	float p2Angle = 0.0;		// only relevant for P2 mode
 	int32_t rMode = 0;		// R setting
