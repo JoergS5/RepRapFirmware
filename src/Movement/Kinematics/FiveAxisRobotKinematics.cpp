@@ -100,76 +100,75 @@ FiveAxisRobotKinematics::FiveAxisRobotKinematics() noexcept
 
 bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], const float stepsPerMm[], size_t numVisibleAxes, size_t numTotalAxes, int32_t motorPos[], bool isCoordinated) const noexcept {
 
- 	 float x = machinePos[0];
- 	 float y = machinePos[1];
- 	 float z = machinePos[2];
+  	 float x = machinePos[0];
+  	 float y = machinePos[1];
+  	 float z = machinePos[2];
 
- 	 float angles[5];
+  	 float angles[5];
 
- 	 float ax2Inv[3];
- 	 float ax3Inv[3];
- 	 float ax4Inv[3];
- 	 float ax5Inv[3];
+  	 float ax2Inv[3];
+  	 float ax3Inv[3];
+  	 float ax4Inv[3];
+  	 float ax5Inv[3];
 
- 	 if(pMode == 0) {
- 		 angles[0] = getAngle1(x, y, z);
- 		 getAxis2Coords(angles[0], ax2Inv);
- 		 getAxis5Coords(x, y, z, angles[0], ax5Inv);
- 		 getAxis4Coords(ax5Inv, ax4Inv, angles[0]);
- 		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
- 		angles[4] = 0;
- 	 }
- 	 else if(pMode == 2 || pMode == 3 || pMode == 4) { // axis5 specific angle
- 		 float axis5Angle;
+  	 if(pMode == 0) {		// axis 5 is always 0 degree
+  		 angles[0] = getAngle1(x, y, z);
+  		 getAxis2Coords(angles[0], ax2Inv);
+  		 getAxis5Coords(x, y, z, angles[0], ax5Inv);
+  		 getAxis4Coords(ax5Inv, ax4Inv, angles[0]);
+  		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
+  		angles[4] = 0.0;
+  	 }
+ 	 else if(pMode == 2 || pMode == 3 || pMode == 4) { // arm5 specific angle
+ 		 float arm5Angle;		// is often different than the axis 5 angle
  		 if(pMode == 2) {
- 			axis5Angle = p2Angle;
+ 			arm5Angle = p2Angle;
  		 }
  		 else {	// 3 or 4
- 			 axis5Angle = currentPlannedPathAngleXY;
+ 			arm5Angle = currentPlannedPathAngleXY;
  		 }
 
- 		ax5Inv[0] = x - cos(axis5Angle/180.0*Pi) * arm5length;
- 		ax5Inv[1] = y - sin(axis5Angle/180.0*Pi) * arm5length;
- 		ax5Inv[2] = z;
+  		ax5Inv[0] = x - cos(arm5Angle/180.0*Pi) * arm5length;
+  		ax5Inv[1] = y - sin(arm5Angle/180.0*Pi) * arm5length;
+  		ax5Inv[2] = z;
 
- 		angles[0] = getAngle1(ax5Inv[0], ax5Inv[1], ax5Inv[2]);
+  		angles[0] = getAngle1(ax5Inv[0], ax5Inv[1], ax5Inv[2]);
 
- 		 getAxis2Coords(angles[0], ax2Inv);
- 		 getAxis4Coords(ax5Inv, ax4Inv, angles[0]);
- 		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
- 		angles[4] = - angles[0] + axis5Angle;
- 	 }
- 	  else {
- 		  // todo report error
- 		  return false;
- 	 }
+  		 getAxis2Coords(angles[0], ax2Inv);
+  		 getAxis4Coords(ax5Inv, ax4Inv, angles[0]);
+  		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
+  		angles[4] = - angles[0] + arm5Angle;	// axis 5 angle
+  	 }
+  	  else {
+  		  // todo report error
+  		  return false;
+  	 }
 
- 	 if(!constraintsOk(angles)) {
- 		 return false;
- 	 }
+  	 if(!constraintsOk(angles)) {
+  		 return false;
+  	 }
 
- 	 if(rMode == 0) {			// all 5 axis have actuators
- 	 	 motorPos[0] = ROUND_2_INT(angles[0] * stepsPerMm[0]);
- 	 	 motorPos[1] = ROUND_2_INT(angles[1] * stepsPerMm[1]);
- 	 	 motorPos[2] = ROUND_2_INT(angles[2] * stepsPerMm[2]);
- 	 	 motorPos[3] = ROUND_2_INT(angles[3] * stepsPerMm[3]);
- 	 	 motorPos[4] = ROUND_2_INT(angles[4] * stepsPerMm[4]);
- 	 }
- 	 else if(rMode == 1) {		// no 4th actuator
- 	 	 motorPos[0] = ROUND_2_INT(angles[0] * stepsPerMm[0]);
- 	 	 motorPos[1] = ROUND_2_INT(angles[1] * stepsPerMm[1]);
- 	 	 motorPos[2] = ROUND_2_INT(angles[2] * stepsPerMm[2]);
- 	 	 motorPos[3] = ROUND_2_INT(angles[4] * stepsPerMm[4]);
- 	 }
- 	 else if(rMode == 2) {		// no 4th and 5th actuator
- 	 	 motorPos[0] = ROUND_2_INT(angles[0] * stepsPerMm[0]);
- 	 	 motorPos[1] = ROUND_2_INT(angles[1] * stepsPerMm[1]);
- 	 	 motorPos[2] = ROUND_2_INT(angles[2] * stepsPerMm[2]);
- 	 }
+  	 if(rMode == 0) {			// all 5 axis have actuators
+  	 	 motorPos[0] = ROUND_2_INT(angles[0] * stepsPerMm[0]);
+  	 	 motorPos[1] = ROUND_2_INT(angles[1] * stepsPerMm[1]);
+  	 	 motorPos[2] = ROUND_2_INT(angles[2] * stepsPerMm[2]);
+  	 	 motorPos[3] = ROUND_2_INT(angles[3] * stepsPerMm[3]);
+  	 	 motorPos[4] = ROUND_2_INT(angles[4] * stepsPerMm[4]);
+  	 }
+  	 else if(rMode == 1) {		// no 4th actuator
+  	 	 motorPos[0] = ROUND_2_INT(angles[0] * stepsPerMm[0]);
+  	 	 motorPos[1] = ROUND_2_INT(angles[1] * stepsPerMm[1]);
+  	 	 motorPos[2] = ROUND_2_INT(angles[2] * stepsPerMm[2]);
+  	 	 motorPos[3] = ROUND_2_INT(angles[4] * stepsPerMm[4]);
+  	 }
+  	 else if(rMode == 2) {		// no 4th and 5th actuator
+  	 	 motorPos[0] = ROUND_2_INT(angles[0] * stepsPerMm[0]);
+  	 	 motorPos[1] = ROUND_2_INT(angles[1] * stepsPerMm[1]);
+  	 	 motorPos[2] = ROUND_2_INT(angles[2] * stepsPerMm[2]);
+  	 }
 
- 	 return true;
- }
-
+  	 return true;
+  }
 
  void FiveAxisRobotKinematics::MotorStepsToCartesian(const int32_t motorPos[], const float stepsPerMm[], size_t numVisibleAxes, size_t numTotalAxes, float machinePos[]) const noexcept {
  	 float angle1 = (float) motorPos[0] / stepsPerMm[0];
