@@ -89,6 +89,7 @@ private:
 
 	float plannedPath[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};		// xyz cartesian coords start and end of current G0/G1 movement
 								// needed for P1 and P3
+	float currentPlannedPathAngleXY = 0.0;		// absoulute angle, Z is constant, counterclockwise
 
 	float arm2length = 0.0;		// starting at axis2
 	float arm3length = 0.0;		// starting at axis3
