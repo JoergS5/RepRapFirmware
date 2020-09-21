@@ -632,6 +632,28 @@ void FiveAxisRobotKinematics::setPlannnedPath(float plpath[]) noexcept {
 	for(int i=0; i < 6; i++) {
 		plannedPath[i] = plpath[i];
 	}
+
+	 float xdiff = plannedPath[3] - plannedPath[0];
+	 float ydiff = plannedPath[4] - plannedPath[1];
+	 if(fabs(xdiff) < 0.0000001) {
+		 if(ydiff > 0.0) {
+			 currentPlannedPathAngleXY = 90.0;
+		 }
+		 else {
+			 currentPlannedPathAngleXY = -90.0;
+		 }
+	 }
+	 else {
+		 currentPlannedPathAngleXY = atan(ydiff/xdiff) * 180.0 / Pi;
+		 if(pMode == 4) {
+			 if(currentPlannedPathAngleXY < -90.0) {
+				 currentPlannedPathAngleXY += 180.0;
+			 }
+			 else if(currentPlannedPathAngleXY > 90.0) {
+				 currentPlannedPathAngleXY -= 180.0;
+			 }
+		 }
+	 }
 }
 
 ////////////////////////// private functions //////////////////////////////
