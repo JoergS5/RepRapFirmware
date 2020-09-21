@@ -119,12 +119,12 @@ bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], co
  		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
  		angles[4] = 0;
  	 }
- 	 else if(pMode == 2 || pMode == 3) { // axis5 specific angle
+ 	 else if(pMode == 2 || pMode == 3 || pMode == 4) { // axis5 specific angle
  		 float axis5Angle;
  		 if(pMode == 2) {
  			axis5Angle = p2Angle;
  		 }
- 		 else {	// 3
+ 		 else {	// 3 or 4
  			 axis5Angle = currentPlannedPathAngleXY;
  		 }
 
