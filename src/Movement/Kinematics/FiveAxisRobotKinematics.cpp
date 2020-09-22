@@ -125,7 +125,7 @@ bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], co
  			arm5Angle = p2Angle;
  		 }
  		 else {	// 3 or 4
- 			arm5Angle = currentPlannedPathAngleXY;
+ 			arm5Angle = plannedPathAngleXY;
  		 }
 
   		ax5Inv[0] = x - cos(arm5Angle/180.0*Pi) * arm5length;
@@ -546,6 +546,17 @@ bool FiveAxisRobotKinematics::IsReachable(float x, float y, bool isCoordinated) 
 }
 
 LimitPositionResult FiveAxisRobotKinematics::LimitPosition(float finalCoords[], const float * null initialCoords, size_t numVisibleAxes, AxesBitmap axesHomed, bool isCoordinated, bool applyM208Limits) const noexcept {
+	if(pMode == 1 || pMode == 3 || pMode == 4) {
+		if(initialCoords != nullptr && finalCoords != nullptr) {
+			float src[3];
+			float dest[3];
+			for(int i=0; i < 3; i++) {
+				src[i] = initialCoords[i];
+				dest[i] = finalCoords[i];
+			}
+			setPlannedPath(src, dest);
+		}
+	}
 
 	// First limit all axes according to M208
 	const bool m208Limited = applyM208Limits && Kinematics::LimitPositionFromAxis(finalCoords, 0, numVisibleAxes, axesHomed);
@@ -627,33 +638,6 @@ AxesBitmap FiveAxisRobotKinematics::GetLinearAxes() const noexcept {
 	return bm;
 }
 
-void FiveAxisRobotKinematics::setPlannnedPath(float plpath[]) noexcept {
-	for(int i=0; i < 6; i++) {
-		plannedPath[i] = plpath[i];
-	}
-
-	 float xdiff = plannedPath[3] - plannedPath[0];
-	 float ydiff = plannedPath[4] - plannedPath[1];
-	 if(fabs(xdiff) < 0.0000001) {
-		 if(ydiff > 0.0) {
-			 currentPlannedPathAngleXY = 90.0;
-		 }
-		 else {
-			 currentPlannedPathAngleXY = -90.0;
-		 }
-	 }
-	 else {
-		 currentPlannedPathAngleXY = atan(ydiff/xdiff) * 180.0 / Pi;
-		 if(pMode == 4) {
-			 if(currentPlannedPathAngleXY < -90.0) {
-				 currentPlannedPathAngleXY += 180.0;
-			 }
-			 else if(currentPlannedPathAngleXY > 90.0) {
-				 currentPlannedPathAngleXY -= 180.0;
-			 }
-		 }
-	 }
-}
 
 ////////////////////////// private functions //////////////////////////////
 
@@ -886,4 +870,33 @@ float FiveAxisRobotKinematics::getAngle1(float x, float y, float z) const {
 		 }
 	 }
 	 return angle1;
+}
+
+void FiveAxisRobotKinematics::setPlannedPath(float sourcePath[], float destPath[]) const noexcept {
+	for(int i=0; i < 3; i++) {
+		plannedPath[i] = sourcePath[i];
+		plannedPath[i+3] = destPath[i];
+	}
+
+	 float xdiff = plannedPath[3] - plannedPath[0];
+	 float ydiff = plannedPath[4] - plannedPath[1];
+	 if(fabs(xdiff) < 0.0000001) {
+		 if(ydiff > 0.0) {
+			 plannedPathAngleXY = 90.0;
+		 }
+		 else {
+			 plannedPathAngleXY = -90.0;
+		 }
+	 }
+	 else {
+		 plannedPathAngleXY = atan(ydiff/xdiff) * 180.0 / Pi;
+		 if(pMode == 4) {
+			 if(plannedPathAngleXY < -90.0) {
+				 plannedPathAngleXY += 180.0;
+			 }
+			 else if(plannedPathAngleXY > 90.0) {
+				 plannedPathAngleXY -= 180.0;
+			 }
+		 }
+	 }
 }
