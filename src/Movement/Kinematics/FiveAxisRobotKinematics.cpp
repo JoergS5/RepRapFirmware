@@ -45,11 +45,11 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 	{ "arm5length",	OBJECT_MODEL_FUNC(self->arm5length, 3), ObjectModelEntryFlags::none },
 
 	// 2. kinematics members special
-	{ "arm2bendingFactor",	OBJECT_MODEL_FUNC(self->arm2bendingFactor, 3), ObjectModelEntryFlags::none },
-	{ "arm3bendingFactor",	OBJECT_MODEL_FUNC(self->arm3bendingFactor, 3), ObjectModelEntryFlags::none },
-	{ "arm4bendingFactor",	OBJECT_MODEL_FUNC(self->arm4bendingFactor, 3), ObjectModelEntryFlags::none },
+	{ "arm2bending",	OBJECT_MODEL_FUNC(self->arm2bending, 3), ObjectModelEntryFlags::none },
+	{ "arm3bending",	OBJECT_MODEL_FUNC(self->arm3bending, 3), ObjectModelEntryFlags::none },
+	{ "arm4bending",	OBJECT_MODEL_FUNC(self->arm4bending, 3), ObjectModelEntryFlags::none },
 	{ "arm4vertical",	OBJECT_MODEL_FUNC(self->arm4vertical, 3), ObjectModelEntryFlags::none },
-	{ "arm5bendingFactor",	OBJECT_MODEL_FUNC(self->arm5bendingFactor, 3), ObjectModelEntryFlags::none },
+	{ "arm5bending",	OBJECT_MODEL_FUNC(self->arm5bending, 3), ObjectModelEntryFlags::none },
 	{ "armOrientation", 				OBJECT_MODEL_FUNC(self->armOrientation), ObjectModelEntryFlags::none },
 	{ "p2Angle", 				OBJECT_MODEL_FUNC(self->p2Angle), ObjectModelEntryFlags::none },
 	{ "pMode", 				OBJECT_MODEL_FUNC(self->pMode), ObjectModelEntryFlags::none },
@@ -399,10 +399,10 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			float bending[5];
 			gb.TryGetFloatArray('B', 5, bending, reply, seen);
 			armOrientation = (int32_t) bending[0];
-			arm2bendingFactor = bending[1];
-			arm3bendingFactor = bending[2];
-			arm4bendingFactor = bending[3];
-			arm5bendingFactor = bending[4];
+			arm2bending = bending[1];
+			arm3bending = bending[2];
+			arm4bending = bending[3];
+			arm5bending = bending[4];
 			seen = true;
 		}
 
