@@ -878,8 +878,8 @@ void FiveAxisRobotKinematics::setPlannedPath(float sourcePath[], float destPath[
 		plannedPath[i+3] = destPath[i];
 	}
 
-	 float xdiff = plannedPath[3] - plannedPath[0];
-	 float ydiff = plannedPath[4] - plannedPath[1];
+	 float xdiff = destPath[0] - sourcePath[0];
+	 float ydiff = destPath[1] - sourcePath[1];
 	 if(fabs(xdiff) < 0.0000001) {
 		 if(ydiff > 0.0) {
 			 plannedPathAngleXY = 90.0;
