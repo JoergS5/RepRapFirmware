@@ -96,10 +96,10 @@ private:
 
 	// arm orientation and bending factors
 	int32_t armOrientation = 0;
-	float arm2bendingFactor = 0.0;	// B parameter a2 value
-	float arm3bendingFactor = 0.0;	// B parameter a3 value
-	float arm4bendingFactor = 0.0;	// B parameter a4 value
-	float arm5bendingFactor = 0.0;	// B parameter a5 value
+	float arm2bending = 0.0;	// B parameter a2 value
+	float arm3bending = 0.0;	// B parameter a3 value
+	float arm4bending = 0.0;	// B parameter a4 value
+	float arm5bending = 0.0;	// B parameter a5 value
 
 	// rail parameters
 	bool railUsed = false;				// if rail is used
