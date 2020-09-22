@@ -64,7 +64,6 @@ private:
 
 	void Recalc() noexcept;
 	void optimizeCode(int32_t valInt);
-	bool constraintsOk(const float angles[]) const noexcept;
 	void getIntersec(float result12[], float firstRadius, float secondRadius, float firstX, float firstY, float secondX, float secondY) const noexcept;
 	bool getIntersectionUpper(float _axis1x, float _axis1y, float _axis2y, float xmid, float ymid, float radiusMid,
 			float tangent[], bool upper) const;
@@ -95,12 +94,6 @@ private:
 	float arm4length = 0.0;		// starting at axis4
 	float arm5length = 0.0;		// starting at axis5
 
-	float angle1limits[2] = {-45.0, 45.0};	// limit angle1 of vertical axis1 min and max (including values both)
-	float angle2limits[2] = {0.0, 75.0};	// limit angle2 of axis2 min and max (including values both)
-	float angle3limits[2] = {-75.0, -5.0};	// limit angle3 of axis3 min and max (including values both)
-	float angle4limits[2] = {-170.0, 170.0};	// limit angle4 of axis4 min and max (including values both)
-	float angle5limits[2] = {-135.0, 135.0};	// limit angle5 of vertical axis5 min and max (including values both)
-
 	// arm orientation and bending factors
 	int32_t armOrientation = 0;
 	float arm2bendingFactor = 0.0;	// B parameter a2 value
@@ -109,7 +102,7 @@ private:
 	float arm5bendingFactor = 0.0;	// B parameter a5 value
 
 	// rail parameters
-	bool useRail = false;				// if rail is used
+	bool railUsed = false;				// if rail is used
 	int32_t railMode = 0;
 	float railX = 0.0;
 	float railY = 0.0;
