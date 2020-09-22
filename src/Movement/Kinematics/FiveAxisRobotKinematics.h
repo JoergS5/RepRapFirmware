@@ -54,8 +54,6 @@ public:
 	void LimitSpeedAndAcceleration(DDA& dda, const float *normalisedDirectionVector, size_t numVisibleAxes, bool continuousRotationShortcut) const noexcept override;
 	AxesBitmap GetLinearAxes() const noexcept override;
 
-	void setPlannnedPath(float path[]) noexcept;
-
 protected:
 	DECLARE_OBJECT_MODEL
 
@@ -76,6 +74,7 @@ private:
 			float angles234[]) const;
 	void getAxis4Coords(const float axis5coords[], float axis4coords[], float angle1) const;
 	void getAxis5Coords(float x, float y, float z, float angle1, float axis5coords[]) const;
+	void setPlannedPath(float sourcePath[], float destPath[]) const noexcept;
 
 	// Primary parameters
 	float axis1coords[2];		// XY
@@ -87,9 +86,9 @@ private:
 	float p2Angle = 0.0;		// only relevant for P2 mode
 	int32_t rMode = 0;		// R setting
 
-	float plannedPath[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};		// xyz cartesian coords start and end of current G0/G1 movement
+	mutable float plannedPath[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};		// xyz cartesian coords start and end of current G0/G1 movement
 								// needed for P1 and P3
-	float currentPlannedPathAngleXY = 0.0;		// absoulute angle, Z is constant, counterclockwise
+	mutable float plannedPathAngleXY = 0.0;		// absoulute angle, Z is constant, counterclockwise
 
 	float arm2length = 0.0;		// starting at axis2
 	float arm3length = 0.0;		// starting at axis3
