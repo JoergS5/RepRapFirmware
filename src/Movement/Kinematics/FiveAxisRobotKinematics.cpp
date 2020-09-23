@@ -503,24 +503,21 @@ float FiveAxisRobotKinematics::GetTiltCorrection(size_t axis) const noexcept {
 	return 0.0;
 }
 
+// IsReachable is not sufficient for robot kinematics, because z is missing
+// as coarse limit add arm 2, arm 3 and arm 5 and add them up to axis 2 's position
 bool FiveAxisRobotKinematics::IsReachable(float x, float y, bool isCoordinated) const noexcept {
-	const Platform& platform = reprap.GetPlatform();
-	bool reachable = true;
+	float armlengths = arm2length + arm3length + arm5length;
+	float xmin = axis2coords[0] - armlengths;
+	float xmax = axis2coords[0] + armlengths;
+	float ymin = axis2coords[1] - armlengths;
+	float ymax = axis2coords[1] + armlengths;
 
-	// test x
-	float xMin = platform.AxisMinimum(0) - AxisRoundingError;
-	float xMax = platform.AxisMaximum(0) + AxisRoundingError;
-	if(x < xMin || x > xMax) {
-		reachable = false;
+	if(x < xmin || x > xmax || y < ymin || y > ymax) {
+		return false;
 	}
-
-	//test y
-	float yMin = platform.AxisMinimum(1) - AxisRoundingError;
-	float yMax = platform.AxisMaximum(1) + AxisRoundingError;
-	if(y < yMin || y > yMax) {
-		reachable = false;
+	else {
+		return true;
 	}
-	return reachable;
 }
 
 LimitPositionResult FiveAxisRobotKinematics::LimitPosition(float finalCoords[], const float * null initialCoords, size_t numVisibleAxes, AxesBitmap axesHomed, bool isCoordinated, bool applyM208Limits) const noexcept {
