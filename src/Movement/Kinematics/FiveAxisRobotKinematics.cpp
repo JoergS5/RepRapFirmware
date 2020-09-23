@@ -504,15 +504,13 @@ float FiveAxisRobotKinematics::GetTiltCorrection(size_t axis) const noexcept {
 }
 
 // IsReachable is not sufficient for robot kinematics, because z is missing
-// as coarse limit add arm 2, arm 3 and arm 5 and add them up to axis 2 's position
+// as coarse limit add arm 2, arm 3 and arm 5 and compare to xy distance from axis 2
 bool FiveAxisRobotKinematics::IsReachable(float x, float y, bool isCoordinated) const noexcept {
-	float armlengths = arm2length + arm3length + arm5length;
-	float xmin = axis2coords[0] - armlengths;
-	float xmax = axis2coords[0] + armlengths;
-	float ymin = axis2coords[1] - armlengths;
-	float ymax = axis2coords[1] + armlengths;
+	float xdiff = axis2coords[0] - x;
+	float ydiff = axis2coords[1] - y;
+	float distanceFromAxis2 = sqrt(xdiff*xdiff + ydiff*ydiff);
 
-	if(x < xmin || x > xmax || y < ymin || y > ymax) {
+	if(distanceFromAxis2 > arm2length + arm3length + arm5length) {
 		return false;
 	}
 	else {
