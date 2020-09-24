@@ -74,6 +74,8 @@ private:
 	void getAxis4Coords(const float axis5coords[], float axis4coords[], float angle1) const;
 	void getAxis5Coords(float x, float y, float z, float angle1, float axis5coords[]) const;
 	void setPlannedPath(float sourcePath[], float destPath[]) const noexcept;
+	int32_t getActuatorsCount() const noexcept;		// without extruder, but with rail
+	bool getAnglesCartesianToMotorSteps(const float machinePos[], float angles[]) const noexcept;
 
 	// Primary parameters
 	float axis1coords[2];		// XY
