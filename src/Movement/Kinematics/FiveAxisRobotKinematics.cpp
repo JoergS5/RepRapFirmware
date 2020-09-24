@@ -135,21 +135,11 @@ bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], co
   	 }
 
   	 // check whether angles are within the M208 limits
-  	 int numberOfVisibleAxes = 6;
-  	 if(!railUsed) {
-  		numberOfVisibleAxes--;
-  	 }
-  	 if(rMode == 1) {
-  		numberOfVisibleAxes--;
-  	 }
-  	 else if(rMode == 2) {
-  		numberOfVisibleAxes -= 2;
-  	 }
-  	AxesBitmap axesHomed = AxesBitmap::MakeLowestNBits(numberOfVisibleAxes);
- 	if(LimitPositionFromAxis(angles, 0, numberOfVisibleAxes, axesHomed)) {
+  	 int32_t numberOfVisibleAxes = getActuatorsCount();
+  	 AxesBitmap axesHomed = AxesBitmap::MakeLowestNBits(numberOfVisibleAxes);
+  	 if(LimitPositionFromAxis(angles, 0, numberOfVisibleAxes, axesHomed)) {
  		return false;
-  	}
-
+  	 }
 
  	// R mode
   	 if(rMode == 0) {			// all 5 axis have actuators
@@ -533,21 +523,23 @@ LimitPositionResult FiveAxisRobotKinematics::LimitPosition(float finalCoords[], 
 	}
 
 	// First limit all axes according to M208
-	const bool m208Limited = applyM208Limits && Kinematics::LimitPositionFromAxis(finalCoords, 0, numVisibleAxes, axesHomed);
 
-	return (m208Limited) ? LimitPositionResult::adjusted : LimitPositionResult::ok;
+ 	 //int32_t numberOfVisibleAxes = getActuatorsCount();
+ 	 //AxesBitmap axesHomed = AxesBitmap::MakeLowestNBits(numberOfVisibleAxes);
+
+	//const bool m208Limited = applyM208Limits && Kinematics::LimitPositionFromAxis(angles, 0, numVisibleAxes, axesHomed);
+
+	//const bool m208Limited = applyM208Limits && Kinematics::LimitPositionFromAxis(finalCoords, 0, numVisibleAxes, axesHomed);
+
+	//return (m208Limited) ? LimitPositionResult::adjusted : LimitPositionResult::ok;
+ 	 return LimitPositionResult::ok;
 }
 
 void FiveAxisRobotKinematics::GetAssumedInitialPosition(size_t numAxes, float positions[]) const noexcept {
 
 }
 AxesBitmap FiveAxisRobotKinematics::AxesToHomeBeforeProbing() const noexcept {
-	if(railUsed) {
-		return AxesBitmap::MakeLowestNBits(6);
-	}
-	else {
-		return AxesBitmap::MakeLowestNBits(5);
-	}
+	return AxesBitmap::MakeLowestNBits(getActuatorsCount());
 }
 
 MotionType FiveAxisRobotKinematics::GetMotionType(size_t axis) const noexcept {
@@ -559,7 +551,7 @@ AxesBitmap FiveAxisRobotKinematics::AxesAssumedHomed(AxesBitmap g92Axes) const n
 }
 
 AxesBitmap FiveAxisRobotKinematics::MustBeHomedAxes(AxesBitmap axesMoving, bool disallowMovesBeforeHoming) const noexcept {
-	return axesMoving;
+	return AxesBitmap::MakeLowestNBits(getActuatorsCount());
 }
 
 AxesBitmap FiveAxisRobotKinematics::GetHomingFileName(AxesBitmap toBeHomed, AxesBitmap alreadyHomed, size_t numVisibleAxes, const StringRef& filename) const noexcept {
@@ -851,4 +843,19 @@ void FiveAxisRobotKinematics::setPlannedPath(float sourcePath[], float destPath[
 			 }
 		 }
 	 }
+}
+
+// count of actuators, without extruder, but with rail
+int32_t FiveAxisRobotKinematics::getActuatorsCount() const noexcept {
+ 	 int numberOfVisibleAxes = 6;
+ 	 if(!railUsed) {
+ 		numberOfVisibleAxes--;
+ 	 }
+ 	 if(rMode == 1) {
+ 		numberOfVisibleAxes--;
+ 	 }
+ 	 else if(rMode == 2) {
+ 		numberOfVisibleAxes -= 2;
+ 	 }
+ 	 return numberOfVisibleAxes;
 }
