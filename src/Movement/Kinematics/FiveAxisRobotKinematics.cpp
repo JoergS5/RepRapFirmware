@@ -89,57 +89,12 @@ FiveAxisRobotKinematics::FiveAxisRobotKinematics() noexcept
 ///////////////////////////// public functions /////////////////////////
 
 bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], const float stepsPerMm[], size_t numVisibleAxes, size_t numTotalAxes, int32_t motorPos[], bool isCoordinated) const noexcept {
+ 	 float angles[5];
+ 	 bool isReachable = getAnglesCartesianToMotorSteps(machinePos, angles);
 
-  	 float x = machinePos[0];
-  	 float y = machinePos[1];
-  	 float z = machinePos[2];
-
-  	 float angles[5];
-
-  	 float ax2Inv[3];
-  	 float ax3Inv[3];
-  	 float ax4Inv[3];
-  	 float ax5Inv[3];
-
-  	 if(pMode == 0) {		// axis 5 is always 0 degree
-  		 angles[0] = getAngle1(x, y, z);
-  		 getAxis2Coords(angles[0], ax2Inv);
-  		 getAxis5Coords(x, y, z, angles[0], ax5Inv);
-  		 getAxis4Coords(ax5Inv, ax4Inv, angles[0]);
-  		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
-  		angles[4] = 0.0;
-  	 }
- 	 else if(pMode == 2 || pMode == 3 || pMode == 4) { // arm5 specific angle
- 		 float arm5Angle;		// is often different than the axis 5 angle
- 		 if(pMode == 2) {
- 			arm5Angle = p2Angle;
- 		 }
- 		 else {	// 3 or 4
- 			arm5Angle = plannedPathAngleXY;
- 		 }
-
-  		ax5Inv[0] = x - cos(arm5Angle/180.0*Pi) * arm5length;
-  		ax5Inv[1] = y - sin(arm5Angle/180.0*Pi) * arm5length;
-  		ax5Inv[2] = z;
-
-  		angles[0] = getAngle1(ax5Inv[0], ax5Inv[1], ax5Inv[2]);
-
-  		 getAxis2Coords(angles[0], ax2Inv);
-  		 getAxis4Coords(ax5Inv, ax4Inv, angles[0]);
-  		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
-  		angles[4] = - angles[0] + arm5Angle;	// axis 5 angle
-  	 }
-  	  else {
-  		  // todo report error
-  		  return false;
-  	 }
-
-  	 // check whether angles are within the M208 limits
-  	 int32_t numberOfVisibleAxes = getActuatorsCount();
-  	 AxesBitmap axesHomed = AxesBitmap::MakeLowestNBits(numberOfVisibleAxes);
-  	 if(LimitPositionFromAxis(angles, 0, numberOfVisibleAxes, axesHomed)) {
- 		return false;
-  	 }
+ 	 if(!isReachable) {
+ 		 return false;
+ 	 }
 
  	// R mode
   	 if(rMode == 0) {			// all 5 axis have actuators
@@ -522,17 +477,17 @@ LimitPositionResult FiveAxisRobotKinematics::LimitPosition(float finalCoords[], 
 		}
 	}
 
-	// First limit all axes according to M208
-
- 	 //int32_t numberOfVisibleAxes = getActuatorsCount();
- 	 //AxesBitmap axesHomed = AxesBitmap::MakeLowestNBits(numberOfVisibleAxes);
-
-	//const bool m208Limited = applyM208Limits && Kinematics::LimitPositionFromAxis(angles, 0, numVisibleAxes, axesHomed);
-
+	// M208 limits
+	 float angles[5];
+	 bool isReachable = getAnglesCartesianToMotorSteps(finalCoords, angles);		// finalCoords == machinePos
+	 	 	 	 	 	 // LimitPositionFromAxis is called inside this method already
+	 if(!isReachable) {
+		 return LimitPositionResult::adjusted;
+	 }
+	 else {
+		 return LimitPositionResult::ok;
+	 }
 	//const bool m208Limited = applyM208Limits && Kinematics::LimitPositionFromAxis(finalCoords, 0, numVisibleAxes, axesHomed);
-
-	//return (m208Limited) ? LimitPositionResult::adjusted : LimitPositionResult::ok;
- 	 return LimitPositionResult::ok;
 }
 
 void FiveAxisRobotKinematics::GetAssumedInitialPosition(size_t numAxes, float positions[]) const noexcept {
@@ -858,4 +813,56 @@ int32_t FiveAxisRobotKinematics::getActuatorsCount() const noexcept {
  		numberOfVisibleAxes -= 2;
  	 }
  	 return numberOfVisibleAxes;
+}
+
+bool FiveAxisRobotKinematics::getAnglesCartesianToMotorSteps(const float machinePos[], float angles[]) const noexcept {
+ 	 float x = machinePos[0];
+ 	 float y = machinePos[1];
+ 	 float z = machinePos[2];
+
+ 	 float ax2Inv[3];
+ 	 float ax3Inv[3];
+ 	 float ax4Inv[3];
+ 	 float ax5Inv[3];
+
+ 	 if(pMode == 0) {		// axis 5 is always 0 degree
+ 		 angles[0] = getAngle1(x, y, z);
+ 		 getAxis2Coords(angles[0], ax2Inv);
+ 		 getAxis5Coords(x, y, z, angles[0], ax5Inv);
+ 		 getAxis4Coords(ax5Inv, ax4Inv, angles[0]);
+ 		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
+ 		angles[4] = 0.0;
+ 	 }
+	 else if(pMode == 2 || pMode == 3 || pMode == 4) { // arm5 specific angle
+		 float arm5Angle;		// is often different than the axis 5 angle
+		 if(pMode == 2) {
+			arm5Angle = p2Angle;
+		 }
+		 else {	// 3 or 4
+			arm5Angle = plannedPathAngleXY;
+		 }
+
+ 		ax5Inv[0] = x - cos(arm5Angle/180.0*Pi) * arm5length;
+ 		ax5Inv[1] = y - sin(arm5Angle/180.0*Pi) * arm5length;
+ 		ax5Inv[2] = z;
+
+ 		angles[0] = getAngle1(ax5Inv[0], ax5Inv[1], ax5Inv[2]);
+
+ 		 getAxis2Coords(angles[0], ax2Inv);
+ 		 getAxis4Coords(ax5Inv, ax4Inv, angles[0]);
+ 		 getAxis3Coords(angles[0], ax2Inv, ax4Inv, ax3Inv, angles);
+ 		angles[4] = - angles[0] + arm5Angle;	// axis 5 angle
+ 	 }
+ 	  else {
+ 		  return false;
+ 	 }
+
+ 	 // check whether angles are within the M208 limits
+ 	 int32_t numberOfVisibleAxes = getActuatorsCount();
+ 	 AxesBitmap axesHomed = AxesBitmap::MakeLowestNBits(numberOfVisibleAxes);
+ 	 if(LimitPositionFromAxis(angles, 0, numberOfVisibleAxes, axesHomed)) {
+		return false;
+ 	 }
+
+ 	 return true;
 }
