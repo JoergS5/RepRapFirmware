@@ -858,8 +858,9 @@ bool FiveAxisRobotKinematics::getAnglesCartesianToMotorSteps(const float machine
  	 }
 
  	 // check whether angles are within the M208 limits
- 	 int32_t numberOfVisibleAxes = getActuatorsCount();
+ 	 int32_t numberOfVisibleAxes = 5;
  	 AxesBitmap axesHomed = AxesBitmap::MakeLowestNBits(numberOfVisibleAxes);
+ 	 // todo check rail limits also (not angle value, but mm)
  	 if(LimitPositionFromAxis(angles, 0, numberOfVisibleAxes, axesHomed)) {
 		return false;
  	 }
