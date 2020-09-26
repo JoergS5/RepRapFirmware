@@ -63,7 +63,6 @@ private:
 	static constexpr float DefaultMinSegmentSize = 0.2;
 
 	void Recalc() noexcept;
-	void optimizeCode(int32_t valInt);
 	void getIntersec(float result12[], float firstRadius, float secondRadius, float firstX, float firstY, float secondX, float secondY) const noexcept;
 	bool getIntersectionUpper(float _axis1x, float _axis1y, float _axis2y, float xmid, float ymid, float radiusMid,
 			float tangent[], bool upper) const;
@@ -77,33 +76,35 @@ private:
 	int32_t getActuatorsCount() const noexcept;		// without extruder, but with rail
 	bool getAnglesCartesianToMotorSteps(const float machinePos[], float angles[]) const noexcept;
 
-	// Primary parameters
+	// X, Y, Z, L parameters: axis 1 and 2 properties, arm lengths
 	float axis1coords[2];		// XY
 	float axis2coords[3];		// XYZ
 	bool axis2yis0 = false;		// if true, arm 2 goes through axis 1
 	bool arm4vertical = true;	// default behaviour
 	float axis5offset[2] = {0.0, 0.0};		// Xo, Yo parameters
-	int32_t pMode = 0;		// P setting
-	float p2Angle = 0.0;		// only relevant for P2 mode
-	int32_t rMode = 0;		// R setting
-
-	mutable float plannedPath[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};		// xyz cartesian coords start and end of current G0/G1 movement
-								// needed for P1 and P3
-	mutable float plannedPathAngleXY = 0.0;		// absoulute angle, Z is constant, counterclockwise
-
 	float arm2length = 0.0;		// starting at axis2
 	float arm3length = 0.0;		// starting at axis3
 	float arm4length = 0.0;		// starting at axis4
 	float arm5length = 0.0;		// starting at axis5
 
-	// arm orientation and bending factors
+	// P parameter: behaviour of axis 5
+	int32_t pMode = 0;		// P setting
+	float p2Angle = 0.0;		// only relevant for P2 mode
+	mutable float plannedPath[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};		// xyz cartesian coords start and end of current G0/G1 movement
+								// needed for P1 and P3
+	mutable float plannedPathAngleXY = 0.0;		// absoulute angle, Z is constant, counterclockwise
+
+	// R parameter: how many actuators
+	int32_t rMode = 0;
+
+	// B parameter: arm orientation and bending factors
 	int32_t armOrientation = 0;
 	float arm2bending = 0.0;	// B parameter a2 value
 	float arm3bending = 0.0;	// B parameter a3 value
 	float arm4bending = 0.0;	// B parameter a4 value
 	float arm5bending = 0.0;	// B parameter a5 value
 
-	// rail parameters
+	// C parameter: rail
 	bool railUsed = false;				// if rail is used
 	int32_t railMode = 0;
 	float railX = 0.0;
