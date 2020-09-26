@@ -163,10 +163,12 @@ bool FiveAxisRobotKinematics::CartesianToMotorSteps(const float machinePos[], co
  	 float l4angledZ = sin((angle2+angle3+angle4)/180.0*Pi) * arm4length;
  	 z += l4angledZ;
 
+ 	 // only correct if arm 4 is vertical:
  	 // axis 5 position
  	 x += axis5offset[0];
  	 y += axis5offset[1];
 
+ 	 // only correct if arm 4 is vertical:
  	 // position nozzle
  	 float l5angled = cos(angle5/180.0*Pi) * arm5length;
  	 x += l5angled;
@@ -659,7 +661,7 @@ void FiveAxisRobotKinematics::getIntersec(float result[], float firstRadius, flo
 
 // more exact method name would be: getStartpointArm4
 void FiveAxisRobotKinematics::getAxis4Coords(const float axis5c[], float axis4c[], float angle1) const {
-	// todo axis5offset correction is only correct if arm 4 is vertical
+	// axis5offset correction is only correct if arm 4 is vertical
 
 	 // rotate axis5offset:
  	 float sinangle = sin(angle1/180.0*Pi);
