@@ -205,10 +205,12 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 {
 	if (mCode == 669)
 	{
+		reply.catf("Kinematics FiveAxisRobot");
 		float val;			// return value
 		int32_t valInt;
 		bool seen = false;			// return value
 		bool seenNonGeometry = false;
+		bool errorOccured = false;
 
 		if (gb.Seen('X')) {		// X of axis 1 and axis 2, optional axis 5 offset
 			float arr[3];
@@ -279,16 +281,30 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			size_t length = 2;
 			gb.GetFloatArray(arr, length, false);
 			if(length == 1) {
-				pMode = (int32_t) arr[0];
-				arm4vertical = true;
-				seen = true;
-				p2Angle = 0.0; // set to clarify it's not used
+				int32_t p = (int32_t) arr[0];
+				if(p == 2) {
+					errorOccured = true;
+					reply.catf(", pMode 2 needs an angle as second parameter");
+				}
+				else {
+					pMode = p;
+					p2Angle = 0.0; // set to clarify it's not used
+					arm4vertical = true;
+					seen = true;
+				}
 			}
 			else if(length == 2) {
-				pMode = (int32_t) arr[0];	// todo report error if not 2
-				p2Angle = arr[1];
-				arm4vertical = true;
-				seen = true;
+				int32_t p = (int32_t) arr[0];
+				if(p != 2) {
+					errorOccured = true;
+					reply.catf(", pMode with 2 parameters must be mode 2");
+				}
+				else {
+					pMode = p;
+					p2Angle = arr[1];
+					arm4vertical = true;
+					seen = true;
+				}
 			}
 		}
 
@@ -332,14 +348,6 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			seen = true;
 		}
 
-		if (gb.Seen('D')) {			// optimization
-			gb.TryGetIValue('D', valInt, seen);
-			if(seen) {
-				optimizeCode(valInt);
-			}
-			seen = true;
-		}
-
 		if (gb.Seen('B')) {			// arm orientation and bendings
 			float bending[5];
 			gb.TryGetFloatArray('B', 5, bending, reply, seen);
@@ -356,68 +364,69 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			Recalc();
 		}
 
-		reply.catf("Kinematics FiveAxisRobot");
-		reply.catf(", axis1XY: %.1f/%.1f, axis2XYZ: %.1f/%.1f/%.1f",
-				(double) axis1coords[0], (double) axis1coords[1],
-				(double) axis2coords[0], (double) axis2coords[1], (double) axis2coords[2]);
-		reply.catf(", L2/3/4/5: %.1f/%.1f/%.1f/%.1f",
-				(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length);
+		if(!errorOccured) {
+			reply.catf(", axis1XY: %.1f/%.1f, axis2XYZ: %.1f/%.1f/%.1f",
+					(double) axis1coords[0], (double) axis1coords[1],
+					(double) axis2coords[0], (double) axis2coords[1], (double) axis2coords[2]);
+			reply.catf(", L2/3/4/5: %.1f/%.1f/%.1f/%.1f",
+					(double) arm2length, (double) arm3length, (double) arm4length, (double) arm5length);
 
-		reply.catf(", XoYo: %.1f/%.1f",
-				(double) axis5offset[0], (double) axis5offset[1]);
+			reply.catf(", XoYo: %.1f/%.1f",
+					(double) axis5offset[0], (double) axis5offset[1]);
 
-		if(pMode == 0) {
-			reply.catf(", P0 (arm 5 fixed 0 degree)");
-		}
-		else if(pMode == 1) {
-			reply.catf(", P1 (arm 5 free rotation)");
-		}
-		else if(pMode == 2) {
-			reply.catf(", P2 (arm 5 fixed angle: %.1f)", (double) p2Angle);
-		}
-		else if(pMode == 3) {
-			reply.catf(", P3 (arm 5 movement direction)");
-		}
+			if(pMode == 0) {
+				reply.catf(", P0 (arm 5 fixed 0 degree)");
+			}
+			else if(pMode == 1) {
+				reply.catf(", P1 (arm 5 free rotation)");
+			}
+			else if(pMode == 2) {
+				reply.catf(", P2 (arm 5 fixed angle: %.1f)", (double) p2Angle);
+			}
+			else if(pMode == 3) {
+				reply.catf(", P3 (arm 5 movement direction)");
+			}
 
-		if(railUsed) {
-			if(rMode == 0) {
-				reply.catf(", R0 (5+rail actuators XYZUVW)");
+			if(railUsed) {
+				if(rMode == 0) {
+					reply.catf(", R0 (5+rail actuators XYZUVW)");
+				}
+				else if(rMode == 1) {
+					reply.catf(", R1 (4+rail actuators XYZUV)");
+				}
+				else if(rMode == 2) {
+					reply.catf(", R2 (3+rail actuators XYZU)");
+				}
 			}
-			else if(rMode == 1) {
-				reply.catf(", R1 (4+rail actuators XYZUV)");
+			else {
+				if(rMode == 0) {
+					reply.catf(", R0 (5 actuators XYZUV)");
+				}
+				else if(rMode == 1) {
+					reply.catf(", R1 (4 actuators XYZU)");
+				}
+				else if(rMode == 2) {
+					reply.catf(", R2 (3 actuators XYZ)");
+				}
 			}
-			else if(rMode == 2) {
-				reply.catf(", R2 (3+rail actuators XYZU)");
-			}
-		}
-		else {
-			if(rMode == 0) {
-				reply.catf(", R0 (5 actuators XYZUV)");
-			}
-			else if(rMode == 1) {
-				reply.catf(", R1 (4 actuators XYZU)");
-			}
-			else if(rMode == 2) {
-				reply.catf(", R2 (3 actuators XYZ)");
-			}
-		}
 
-		if(railUsed) {
-			if(railMode == 1) {
-				reply.catf(", C%i (rail parallel to X, XYZ: %.1f/%.1f/%.1f)",
-						(int) railMode, (double) railX, (double) railY, (double) railZ);
+			if(railUsed) {
+				if(railMode == 1) {
+					reply.catf(", C%i (rail parallel to X, XYZ: %.1f/%.1f/%.1f)",
+							(int) railMode, (double) railX, (double) railY, (double) railZ);
+				}
+				else if(railMode == 2) {
+					reply.catf(", C%i (rail parallel to Y, XYZ: %.1f/%.1f/%.1f)",
+							(int) railMode, (double) railX, (double) railY, (double) railZ);
+				}
+				else if(railMode == 3) {
+					reply.catf(", C%i (rail parallel to Z, XYZ: %.1f/%.1f/%.1f)",
+							(int) railMode, (double) railX, (double) railY, (double) railZ);
+				}
 			}
-			else if(railMode == 2) {
-				reply.catf(", C%i (rail parallel to Y, XYZ: %.1f/%.1f/%.1f)",
-						(int) railMode, (double) railX, (double) railY, (double) railZ);
+			else {
+				reply.catf(", C0 (no rail)");
 			}
-			else if(railMode == 3) {
-				reply.catf(", C%i (rail parallel to Z, XYZ: %.1f/%.1f/%.1f)",
-						(int) railMode, (double) railX, (double) railY, (double) railZ);
-			}
-		}
-		else {
-			reply.catf(", C0 (no rail)");
 		}
 
 		return seen;
@@ -558,10 +567,6 @@ AxesBitmap FiveAxisRobotKinematics::GetLinearAxes() const noexcept {
 
 
 ////////////////////////// private functions //////////////////////////////
-
-void FiveAxisRobotKinematics::optimizeCode(int32_t valInt) {
-	// not implemented yet
-}
 
 void FiveAxisRobotKinematics::Recalc() noexcept {
 	// no cached values yet
