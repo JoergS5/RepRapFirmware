@@ -44,6 +44,20 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 	{ "arm4length",	OBJECT_MODEL_FUNC(self->arm4length, 3), ObjectModelEntryFlags::none },
 	{ "arm5length",	OBJECT_MODEL_FUNC(self->arm5length, 3), ObjectModelEntryFlags::none },
 
+	// 1. kinematics members lengths
+	{ "axis1LimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[1], 3), ObjectModelEntryFlags::none },
+	{ "axis1LimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[0], 3), ObjectModelEntryFlags::none },
+	{ "axis2LimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[3], 3), ObjectModelEntryFlags::none },
+	{ "axis2LimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[2], 3), ObjectModelEntryFlags::none },
+	{ "axis3LimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[5], 3), ObjectModelEntryFlags::none },
+	{ "axis3LimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[4], 3), ObjectModelEntryFlags::none },
+	{ "axis4LimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[7], 3), ObjectModelEntryFlags::none },
+	{ "axis4LimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[6], 3), ObjectModelEntryFlags::none },
+	{ "axis5LimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[9], 3), ObjectModelEntryFlags::none },
+	{ "axis5LimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[8], 3), ObjectModelEntryFlags::none },
+	{ "railLimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[11], 3), ObjectModelEntryFlags::none },
+	{ "railLimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[10], 3), ObjectModelEntryFlags::none },
+
 	// 2. kinematics members special
 	{ "arm2bending",	OBJECT_MODEL_FUNC(self->arm2bending, 3), ObjectModelEntryFlags::none },
 	{ "arm3bending",	OBJECT_MODEL_FUNC(self->arm3bending, 3), ObjectModelEntryFlags::none },
@@ -74,7 +88,7 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 
 
 // number of groups, number of entries for each group:
-constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 5, 1, 4, 9, 7, 5 };
+constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 6, 1, 4, 12, 9, 7, 5 };
 
 DEFINE_GET_OBJECT_MODEL_TABLE(FiveAxisRobotKinematics)
 
@@ -248,6 +262,21 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			seen = true;
 		}
 
+		if (gb.Seen('A')) {		// axis limits 1...5, rail limits, min, then max values
+			float arr[12];
+			size_t length = 12;
+			gb.GetFloatArray(arr, length, false);
+			if(length == 10 || length == 12) {
+				for(size_t i=0; i < length; i++) {
+					axisLimits[i] = arr[i];
+					if(i % 2 == 0 && i > 0 && arr[i-1] > arr[i]) {
+						reply.catf(", axis limits must be min value first, then max value");
+						errorOccured = true;
+					}
+				}
+			}
+		}
+
 		if (gb.Seen('C')) {		// define rail parameters
 			float arr[4];
 			size_t length = 4;
@@ -377,17 +406,26 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 					(double) axis5offset[0], (double) axis5offset[1]);
 
 			if(pMode == 0) {
-				reply.catf(", P0 (arm 5 fixed 0 degree)");
+				reply.catf(", P0 (arm 5 0 degree)");
 			}
 			else if(pMode == 1) {
-				reply.catf(", P1 (arm 5 free rotation)");
+				reply.catf(", P1 (arm 5 free)");
 			}
 			else if(pMode == 2) {
-				reply.catf(", P2 (arm 5 fixed angle: %.1f)", (double) p2Angle);
+				reply.catf(", P2 (arm 5 angle: %.1f)", (double) p2Angle);
 			}
 			else if(pMode == 3) {
 				reply.catf(", P3 (arm 5 movement direction)");
 			}
+			else if(pMode == 4) {
+				reply.catf(", P4 (arm 5 movement direction right)");
+			}
+
+			reply.catf(", A%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f",
+					(double) axisLimits[0], (double) axisLimits[1], (double) axisLimits[2],
+					(double) axisLimits[3], (double) axisLimits[4], (double) axisLimits[5],
+					(double) axisLimits[6], (double) axisLimits[7], (double) axisLimits[8],
+					(double) axisLimits[9], (double) axisLimits[10], (double) axisLimits[11] );
 
 			if(railUsed) {
 				if(rMode == 0) {
@@ -488,7 +526,6 @@ LimitPositionResult FiveAxisRobotKinematics::LimitPosition(float finalCoords[], 
 		}
 	}
 
-	// M208 limits
 	 float angles[5];
 	 bool isReachable = getAnglesCartesianToMotorSteps(finalCoords, angles);		// finalCoords == machinePos
 	 	 	 	 	 	 // LimitPositionFromAxis is called inside this method already
@@ -498,7 +535,6 @@ LimitPositionResult FiveAxisRobotKinematics::LimitPosition(float finalCoords[], 
 	 else {
 		 return LimitPositionResult::ok;
 	 }
-	//const bool m208Limited = applyM208Limits && Kinematics::LimitPositionFromAxis(finalCoords, 0, numVisibleAxes, axesHomed);
 }
 
 void FiveAxisRobotKinematics::GetAssumedInitialPosition(size_t numAxes, float positions[]) const noexcept {
@@ -864,13 +900,31 @@ bool FiveAxisRobotKinematics::getAnglesCartesianToMotorSteps(const float machine
  		  return false;
  	 }
 
- 	 // check whether angles are within the M208 limits
- 	 int32_t numberOfVisibleAxes = 5;
- 	 AxesBitmap axesHomed = AxesBitmap::MakeLowestNBits(numberOfVisibleAxes);
- 	 // todo check rail limits also (not angle value, but mm)
- 	 if(LimitPositionFromAxis(angles, 0, numberOfVisibleAxes, axesHomed)) {
-		return false;
+ 	 bool angleok = angleLimitsOk(angles);
+ 	 if(angleok) {
+ 		 return true;
  	 }
+ 	 else {
+ 		 return false;
+ 	 }
+}
 
- 	 return true;
+bool FiveAxisRobotKinematics::angleLimitsOk(float angles[]) const noexcept {
+	bool result = true;
+	if(angles[0]- FLOATERROR < axisLimits[0] || angles[0] + FLOATERROR > axisLimits[1]) {
+		result = false;
+	}
+	if(angles[1]- FLOATERROR < axisLimits[2] || angles[1] + FLOATERROR > axisLimits[3]) {
+		result = false;
+	}
+	if(angles[2]- FLOATERROR < axisLimits[4] || angles[2] + FLOATERROR > axisLimits[5]) {
+		result = false;
+	}
+	if(angles[3]- FLOATERROR < axisLimits[6] || angles[3] + FLOATERROR > axisLimits[7]) {
+		result = false;
+	}
+	if(angles[4]- FLOATERROR < axisLimits[8] || angles[4] + FLOATERROR > axisLimits[9]) {
+		result = false;
+	}
+	return result;
 }
