@@ -75,6 +75,7 @@ private:
 	void setPlannedPath(float sourcePath[], float destPath[]) const noexcept;
 	int32_t getActuatorsCount() const noexcept;		// without extruder, but with rail
 	bool getAnglesCartesianToMotorSteps(const float machinePos[], float angles[]) const noexcept;
+	bool angleLimitsOk(float angles[]) const noexcept;
 
 	// X, Y, Z, L parameters: axis 1 and 2 properties, arm lengths
 	float axis1coords[2];		// XY
@@ -93,6 +94,7 @@ private:
 	mutable float plannedPath[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};		// xyz cartesian coords start and end of current G0/G1 movement
 								// needed for P1 and P3
 	mutable float plannedPathAngleXY = 0.0;		// absoulute angle, Z is constant, counterclockwise
+	float axisLimits[12] = {-45.0, 45.0, 0.0, 70.0, -70.0, 0.0, -170.0, 0.0, -225.0, 225.0, 0.0, 1000.0};
 
 	// R parameter: how many actuators
 	int32_t rMode = 0;
