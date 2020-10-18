@@ -44,19 +44,26 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 	{ "arm4length",	OBJECT_MODEL_FUNC(self->arm4length, 3), ObjectModelEntryFlags::none },
 	{ "arm5length",	OBJECT_MODEL_FUNC(self->arm5length, 3), ObjectModelEntryFlags::none },
 
-	// 1. kinematics members lengths
-	{ "axis1LimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[1], 3), ObjectModelEntryFlags::none },
-	{ "axis1LimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[0], 3), ObjectModelEntryFlags::none },
-	{ "axis2LimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[3], 3), ObjectModelEntryFlags::none },
-	{ "axis2LimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[2], 3), ObjectModelEntryFlags::none },
-	{ "axis3LimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[5], 3), ObjectModelEntryFlags::none },
-	{ "axis3LimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[4], 3), ObjectModelEntryFlags::none },
-	{ "axis4LimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[7], 3), ObjectModelEntryFlags::none },
-	{ "axis4LimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[6], 3), ObjectModelEntryFlags::none },
-	{ "axis5LimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[9], 3), ObjectModelEntryFlags::none },
-	{ "axis5LimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[8], 3), ObjectModelEntryFlags::none },
-	{ "railLimitMax",	OBJECT_MODEL_FUNC(self->axisLimits[11], 3), ObjectModelEntryFlags::none },
-	{ "railLimitMin",	OBJECT_MODEL_FUNC(self->axisLimits[10], 3), ObjectModelEntryFlags::none },
+	// 2. angle limits and endstop positions
+	{ "axis1LimitMax",	OBJECT_MODEL_FUNC(self->axisLimitsMax[0], 3), ObjectModelEntryFlags::none },
+	{ "axis1LimitMin",	OBJECT_MODEL_FUNC(self->axisLimitsMin[0], 3), ObjectModelEntryFlags::none },
+	{ "axis2LimitMax",	OBJECT_MODEL_FUNC(self->axisLimitsMax[1], 3), ObjectModelEntryFlags::none },
+	{ "axis2LimitMin",	OBJECT_MODEL_FUNC(self->axisLimitsMin[1], 3), ObjectModelEntryFlags::none },
+	{ "axis3LimitMax",	OBJECT_MODEL_FUNC(self->axisLimitsMax[2], 3), ObjectModelEntryFlags::none },
+	{ "axis3LimitMin",	OBJECT_MODEL_FUNC(self->axisLimitsMin[2], 3), ObjectModelEntryFlags::none },
+	{ "axis4LimitMax",	OBJECT_MODEL_FUNC(self->axisLimitsMax[3], 3), ObjectModelEntryFlags::none },
+	{ "axis4LimitMin",	OBJECT_MODEL_FUNC(self->axisLimitsMin[3], 3), ObjectModelEntryFlags::none },
+	{ "axis5LimitMax",	OBJECT_MODEL_FUNC(self->axisLimitsMax[4], 3), ObjectModelEntryFlags::none },
+	{ "axis5LimitMin",	OBJECT_MODEL_FUNC(self->axisLimitsMin[4], 3), ObjectModelEntryFlags::none },
+	{ "axis6LimitMax",	OBJECT_MODEL_FUNC(self->axisLimitsMax[5], 3), ObjectModelEntryFlags::none },
+	{ "axis6LimitMin",	OBJECT_MODEL_FUNC(self->axisLimitsMin[5], 3), ObjectModelEntryFlags::none },
+	{ "endStopAngle1",	OBJECT_MODEL_FUNC(self->endStopAngles[0], 3), ObjectModelEntryFlags::none },
+	{ "endStopAngle2",	OBJECT_MODEL_FUNC(self->endStopAngles[1], 3), ObjectModelEntryFlags::none },
+	{ "endStopAngle3",	OBJECT_MODEL_FUNC(self->endStopAngles[2], 3), ObjectModelEntryFlags::none },
+	{ "endStopAngle4",	OBJECT_MODEL_FUNC(self->endStopAngles[3], 3), ObjectModelEntryFlags::none },
+	{ "endStopAngle5",	OBJECT_MODEL_FUNC(self->endStopAngles[4], 3), ObjectModelEntryFlags::none },
+	{ "endStopRail",	OBJECT_MODEL_FUNC(self->endStopRail, 3), ObjectModelEntryFlags::none },
+
 
 	// 2. kinematics members special
 	{ "arm2bending",	OBJECT_MODEL_FUNC(self->arm2bending, 3), ObjectModelEntryFlags::none },
@@ -88,7 +95,7 @@ constexpr ObjectModelTableEntry FiveAxisRobotKinematics::objectModelTable[] =
 
 
 // number of groups, number of entries for each group:
-constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 6, 1, 4, 12, 9, 7, 5 };
+constexpr uint8_t FiveAxisRobotKinematics::objectModelTableDescriptor[] = { 6, 1, 4, 18, 9, 7, 5 };
 
 DEFINE_GET_OBJECT_MODEL_TABLE(FiveAxisRobotKinematics)
 
@@ -262,17 +269,24 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 			seen = true;
 		}
 
-		if (gb.Seen('A')) {		// axis limits 1...5, rail limits, min, then max values
-			float arr[12];
-			size_t length = 12;
+		if (gb.Seen('A')) {		// axis limits 1...5, rail limits, min, then endpoint, then max values
+			float arr[18];
+			size_t length = 18;
 			gb.GetFloatArray(arr, length, false);
-			if(length == 10 || length == 12) {
-				for(size_t i=0; i < length; i++) {
-					axisLimits[i] = arr[i];
-					if(i % 2 == 0 && i > 0 && arr[i-1] > arr[i]) {
+			if(length == 15 || length == 18) {
+				for(size_t i=0; i < 15; i+=3) {
+					axisLimitsMin[i/3] = arr[i];
+					endStopAngles[i/3] = arr[i+1];
+					axisLimitsMax[i/3] = arr[i+2];
+					if(axisLimitsMin[i/3] > axisLimitsMax[i/3]) {
 						reply.catf(", axis limits must be min value first, then max value");
 						errorOccured = true;
 					}
+				}
+				if(length == 18) {
+					axisLimitsMin[5] = arr[15];
+					endStopRail = arr[16];
+					axisLimitsMax[5] = arr[17];
 				}
 			}
 		}
@@ -421,11 +435,13 @@ bool FiveAxisRobotKinematics::Configure(unsigned int mCode, GCodeBuffer& gb, con
 				reply.catf(", P4 (arm 5 movement direction right)");
 			}
 
-			reply.catf(", A%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f",
-					(double) axisLimits[0], (double) axisLimits[1], (double) axisLimits[2],
-					(double) axisLimits[3], (double) axisLimits[4], (double) axisLimits[5],
-					(double) axisLimits[6], (double) axisLimits[7], (double) axisLimits[8],
-					(double) axisLimits[9], (double) axisLimits[10], (double) axisLimits[11] );
+			reply.catf(", A%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f:%.1f",
+					(double) axisLimitsMin[0], (double) endStopAngles[0], (double) axisLimitsMax[0],
+					(double) axisLimitsMin[1], (double) endStopAngles[1], (double) axisLimitsMax[1],
+					(double) axisLimitsMin[2], (double) endStopAngles[2], (double) axisLimitsMax[2],
+					(double) axisLimitsMin[3], (double) endStopAngles[3], (double) axisLimitsMax[3],
+					(double) axisLimitsMin[4], (double) endStopAngles[4], (double) axisLimitsMax[4],
+					(double) axisLimitsMin[5], (double) endStopRail, (double) axisLimitsMax[5]);
 
 			if(railUsed) {
 				if(rMode == 0) {
@@ -565,25 +581,14 @@ bool FiveAxisRobotKinematics::QueryTerminateHomingMove(size_t axis) const noexce
 }
 
 void FiveAxisRobotKinematics::OnHomingSwitchTriggered(size_t axis, bool highEnd, const float stepsPerMm[], DDA& dda) const noexcept {
-	switch(axis)  {
-	case 0:
-		dda.SetDriveCoordinate(0, axis);
-		break;
-	case 1:
-		dda.SetDriveCoordinate(0, axis);
-		break;
-	case 2:
-		dda.SetDriveCoordinate(0, axis);
-		break;
-	case 3:
-		dda.SetDriveCoordinate(0, axis);
-		break;
-	case 4:
-		dda.SetDriveCoordinate(0, axis);
-		break;
-	case 5:
-		dda.SetDriveCoordinate(0, axis);
-		break;
+	float motorPos = -1;
+	if(axis < 5) {
+		motorPos = endStopAngles[axis] * stepsPerMm[axis];
+		dda.SetDriveCoordinate(motorPos, axis);
+	}
+	else if (axis == 5) {
+		motorPos = endStopRail * stepsPerMm[axis];
+		dda.SetDriveCoordinate(motorPos, axis);
 	}
 }
 
@@ -911,19 +916,19 @@ bool FiveAxisRobotKinematics::getAnglesCartesianToMotorSteps(const float machine
 
 bool FiveAxisRobotKinematics::angleLimitsOk(float angles[]) const noexcept {
 	bool result = true;
-	if(angles[0]- FLOATERROR < axisLimits[0] || angles[0] + FLOATERROR > axisLimits[1]) {
+	if(angles[0]- FLOATERROR < axisLimitsMin[0] || angles[0] + FLOATERROR > axisLimitsMax[0]) {
 		result = false;
 	}
-	if(angles[1]- FLOATERROR < axisLimits[2] || angles[1] + FLOATERROR > axisLimits[3]) {
+	if(angles[1]- FLOATERROR < axisLimitsMin[1] || angles[1] + FLOATERROR > axisLimitsMax[1]) {
 		result = false;
 	}
-	if(angles[2]- FLOATERROR < axisLimits[4] || angles[2] + FLOATERROR > axisLimits[5]) {
+	if(angles[2]- FLOATERROR < axisLimitsMin[2] || angles[2] + FLOATERROR > axisLimitsMax[2]) {
 		result = false;
 	}
-	if(angles[3]- FLOATERROR < axisLimits[6] || angles[3] + FLOATERROR > axisLimits[7]) {
+	if(angles[3]- FLOATERROR < axisLimitsMin[3] || angles[3] + FLOATERROR > axisLimitsMax[3]) {
 		result = false;
 	}
-	if(angles[4]- FLOATERROR < axisLimits[8] || angles[4] + FLOATERROR > axisLimits[9]) {
+	if(angles[4]- FLOATERROR < axisLimitsMin[4] || angles[4] + FLOATERROR > axisLimitsMax[4]) {
 		result = false;
 	}
 	return result;
