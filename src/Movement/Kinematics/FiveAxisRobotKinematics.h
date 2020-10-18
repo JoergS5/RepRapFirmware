@@ -94,7 +94,12 @@ private:
 	mutable float plannedPath[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};		// xyz cartesian coords start and end of current G0/G1 movement
 								// needed for P1 and P3
 	mutable float plannedPathAngleXY = 0.0;		// absoulute angle, Z is constant, counterclockwise
-	float axisLimits[12] = {-45.0, 45.0, 0.0, 70.0, -70.0, 0.0, -170.0, 0.0, -225.0, 225.0, 0.0, 1000.0};
+
+	// axis limits and endstop positions
+	float axisLimitsMin[6] = {-45.0,  0.0, -70.0, -170.0, -225.0,    0.0};
+	float axisLimitsMax[6] = { 45.0, 70.0,   0.0,    0.0,  225.0, 1000.0};
+	float endStopAngles[5] = {0.0, 0.0, 0.0, -90.0, 0.0 };	// axis 1 to 5 in degree
+	float endStopRail = 0.0;			// rail endpoint position in mm
 
 	// R parameter: how many actuators
 	int32_t rMode = 0;
@@ -112,6 +117,7 @@ private:
 	float railX = 0.0;
 	float railY = 0.0;
 	float railZ = 0.0;
+
 
 };
 
