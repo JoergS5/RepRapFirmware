@@ -529,19 +529,6 @@ bool FiveAxisRobotKinematics::IsReachable(float x, float y, bool isCoordinated) 
 }
 
 LimitPositionResult FiveAxisRobotKinematics::LimitPosition(float finalCoords[], const float * null initialCoords, size_t numVisibleAxes, AxesBitmap axesHomed, bool isCoordinated, bool applyM208Limits) const noexcept {
-	if(pMode == 1 || pMode == 3 || pMode == 4) {
-		if(initialCoords != nullptr && finalCoords != nullptr) {
-			float src[3];
-			float dest[3];
-			for(int i=0; i < 3; i++) {
-				src[i] = initialCoords[i];
-				dest[i] = finalCoords[i];
-			}
-			setPlannedPath(src, dest);
-			// todo will probably not work with G2/G3 (arc move), because initCoords were set to nullptr in GCodes.cpp)
-		}
-	}
-
 	 float angles[5];
 	 bool isReachable = getAnglesCartesianToMotorSteps(finalCoords, angles);		// finalCoords == machinePos
 	 	 	 	 	 	 // LimitPositionFromAxis is called inside this method already
@@ -549,6 +536,28 @@ LimitPositionResult FiveAxisRobotKinematics::LimitPosition(float finalCoords[], 
 		 return LimitPositionResult::adjusted;
 	 }
 	 else {
+		if(pMode == 1 || pMode == 3 || pMode == 4) {
+			if(initialCoords == nullptr) {// arc move, take previous target coords as starting coords
+				float src[3];
+				float dest[3];
+				for(int i=0; i < 3; i++) {
+					src[i] = plannedPath[i+3];
+					dest[i] = finalCoords[i];
+				}
+				setPlannedPath(src, dest);
+				// todo of course this is not correct, the path should be the tangent of the arc
+			}
+			else {
+				float src[3];
+				float dest[3];
+				for(int i=0; i < 3; i++) {
+					src[i] = initialCoords[i];
+					dest[i] = finalCoords[i];
+				}
+				setPlannedPath(src, dest);
+			}
+		}
+
 		 return LimitPositionResult::ok;
 	 }
 }
